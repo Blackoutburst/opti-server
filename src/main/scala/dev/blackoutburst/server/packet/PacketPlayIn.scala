@@ -1,6 +1,8 @@
 package dev.blackoutburst.server.packet
 
-case class PacketPlayIn(
-   id: Int,
-   size: Int
-)
+class PacketPlayIn(
+    val id: Int,
+    val size: Int
+) {
+    def decode(body: Array[Byte]): Unit
+}

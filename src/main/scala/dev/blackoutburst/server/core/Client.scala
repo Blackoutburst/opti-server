@@ -11,7 +11,11 @@ class Client(
     val entityId: Int
 ) {
     def read(): Unit =
-        if PacketManager.isPacketValid(socket.getInputStream) then
+        val id = socket.getInputStream.readNBytes(1)
+        val size = PacketManager.getPacketSize(id(0) & 0xFF).getOrElse(0)
+        val body = socket.getInputStream.readNBytes(size)
+
+        if PacketManager.isPacketValid(id, body) then
             PacketManager.decode()
         else
             socket.close()

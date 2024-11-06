@@ -14,25 +14,29 @@ object PacketManager {
         C04ClientMetadata(0x04, 65),
     )
 
-    def isPacketValid(inputStream: InputStream): Boolean =
-        readPacketId(inputStream).flatMap { id =>
-            isSizeValid(inputStream, id).map(_ => true)
+    def isPacketValid(id: Array[Byte], body: Array[Byte]): Boolean =
+        checkPacketId(id).flatMap { id =>
+            isSizeValid(id, body).map(_ => true)
         }.getOrElse(false)
 
-    private def readPacketId(inputStream: InputStream): Option[Int] =
-        Option(inputStream.readNBytes(1))
+    private def checkPacketId(id: Array[Byte]): Option[Int] =
+        Option(id)
             .filter(_.nonEmpty)
             .map(_(0) & 0xFF)
             .filter(isIdValid)
 
-    private def getPacketSize(id: Int): Option[Int] = packets.find(_.id == id).map(_.size)
+    def getPacketSize(id: Int): Option[Int] = packets.find(_.id == id).map(_.size)
 
-    private def isSizeValid(inputStream: InputStream, id: Int): Option[Boolean] =
+    private def isSizeValid(id: Int, body: Array[Byte]): Option[Boolean] =
         getPacketSize(id).map { size =>
-            size == inputStream.readNBytes(size).length
+            size == body.length
         }.filter(identity)
 
     private def isIdValid(id: Int): Boolean = packets.exists(_.id == id)
 
-    def decode(): Unit = {}
+    def decode(id: Array[Byte], body: Array[Byte]): Unit =
+        packets.find(_.id == (id(0) & 0xFF)) match
+            case Some(packet) => packet.decode(body)
+            case None => println(f"Tf happened ? Wrong packet id [${id(0) & 0xFF}]")
+
 }
