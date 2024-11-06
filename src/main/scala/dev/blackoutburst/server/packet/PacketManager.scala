@@ -2,8 +2,6 @@ package dev.blackoutburst.server.packet
 
 import dev.blackoutburst.server.packet.client.{C00UpdateEntity, C01UpdateBlock, C02BlockBulkEdit, C03Chat, C04ClientMetadata}
 
-import java.io.InputStream
-
 object PacketManager {
 
     private val packets = List(

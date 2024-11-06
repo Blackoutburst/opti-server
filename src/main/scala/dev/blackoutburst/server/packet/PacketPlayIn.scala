@@ -1,6 +1,6 @@
 package dev.blackoutburst.server.packet
 
-class PacketPlayIn(
+abstract class PacketPlayIn(
     val id: Int,
     val size: Int
 ) {

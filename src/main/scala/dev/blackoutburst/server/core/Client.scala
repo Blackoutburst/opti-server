@@ -16,7 +16,7 @@ class Client(
         val body = socket.getInputStream.readNBytes(size)
 
         if PacketManager.isPacketValid(id, body) then
-            PacketManager.decode()
+            PacketManager.decode(id, body)
         else
             socket.close()
 
