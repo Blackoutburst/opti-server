@@ -1,0 +1,7 @@
+package dev.blackoutburst.server.packet.client
+
+import dev.blackoutburst.server.packet.PacketPlayIn
+
+class C03Chat(id: Int, size: Int) extends PacketPlayIn(id, size) {
+
+}
