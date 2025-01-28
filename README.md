@@ -1,7 +1,7 @@
 ## Information
 - This protocol uses **BIG ENDIAN**
 - Server doesn't send empty chunk
-- TCP uses port 15000
+- TCP uses port **15000**
 
 ## Current Protocol
 
