@@ -3,6 +3,7 @@
 #include "utils/types.h"
 
 #define TCP_PORT 15000
+#define TCP_LISTENT_QUEUE_SIZE 8
 #define BUFFER_SIZE 5000
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -20,17 +21,22 @@
 
 
 #if defined(_WIN32) || defined(_WIN64)
+    DWORD WINAPI serverRead(LPVOID arg);
+    void serverWriteWIN(U8* buffer);
     void serverAcceptWIN(void);
     void serverListenWIN(void);
     void serverCleanWIN(void);
     void serverInitWIN(void);
 #else
+    void* serverRead(void* arg);
+    void serverWritePOSIX(U8* buffer);
     void serverAcceptPOSIX(void);
     void serverListenPOSIX(void);
     void serverCleanPOSIX(void);
     void serverInitPOSIX(void);
 #endif
 
+void serverWrite(U8* buffer);
 void serverAccept(void);
 void serverListen(void);
 void serverClean(void);

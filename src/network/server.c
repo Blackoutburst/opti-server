@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils/ioUtils.h"
+#include "utils/thread.h"
 #include "network/server.h"
 
 static U8 running = 0;
@@ -12,32 +13,77 @@ static U8 running = 0;
     static I32 serverSocket = 0;
 #endif
 
+/// READ ///
+#if defined(_WIN32) || defined(_WIN64)
+     DWORD WINAPI serverRead(LPVOID arg) {
+        SOCKET clientSocket = *(SOCKET*)arg;
+        free(arg);
+
+        while (running && clientSocket != INVALID_SOCKET) {
+            //recv(clientSocket, buffer, size, 0);
+        }
+
+        return 0;
+     }
+#else
+    void* serverRead(void* arg) {
+        I32 clientSocket = *(I32*)arg;
+        free(arg);
+
+        while (running && clientSocket >= 0) {
+            //recv(clientSocket, buffer, size, 0);
+        }
+
+        return NULL;
+    }
+#endif
+
+/// WRITE ///
+#if defined(_WIN32) || defined(_WIN64)
+    void serverWriteWIN(U8* buffer) {
+
+    }
+#else
+    void serverWritePOSIX(U8* buffer) {
+
+    }
+#endif
+void serverWrite(U8* buffer) {
+    #if defined(_WIN32) || defined(_WIN64)
+        serverWriteWIN(buffer);
+    #else
+        serverWritePOSIX(buffer);
+    #endif
+}
+
 /// ACCEPT ///
 #if defined(_WIN32) || defined(_WIN64)
     void serverAcceptWIN(void) {
         struct sockaddr_in clientAddress;
         socklen_t clientLength;
-        I32 clientSocket = 0;
+        SOCKET* clientSocket = malloc(sizeof(SOCKET));
 
         clientLength = sizeof(clientAddress);
-        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
-        if (clientSocket == INVALID_SOCKET) {
+        *clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (*clientSocket == INVALID_SOCKET) {
             println("Client accept failed");
         }
-        // Start thread to read client data
+
+        createThread(serverRead, clientSocket);
     }
 #else
     void serverAcceptPOSIX(void) {
         struct sockaddr_in clientAddress;
         socklen_t clientLength;
-        I32 clientSocket = 0;
+        I32* clientSocket = malloc(sizeof(I32));
 
         clientLength = sizeof(clientAddress);
-        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
-        if (clientSocket < 0) {
+        *clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (*clientSocket < 0) {
             println("Client accept failed");
         }
-        // Start thread to read client data
+
+        createThread(serverRead, clientSocket);
     }
 #endif
 
@@ -53,7 +99,7 @@ void serverAccept(void) {
 #if defined(_WIN32) || defined(_WIN64)
     void serverListenWIN(void) {
         while (running) {
-            if (listen(server_fd, 1) == SOCKET_ERROR) {
+            if (listen(server_fd, TCP_LISTENT_QUEUE_SIZE) == SOCKET_ERROR) {
                 println("Server listen failed");
                 serverClean();
             }
@@ -64,7 +110,7 @@ void serverAccept(void) {
 #else
     void serverListenPOSIX(void) {
         while (running) {
-            if (listen(serverSocket, 1) < 0) {
+            if (listen(serverSocket, TCP_LISTENT_QUEUE_SIZE) < 0) {
                 println("Server listen failed");
                 serverClean();
             }
@@ -84,18 +130,20 @@ void serverListen(void) {
         serverListenPOSIX();
     #endif
 }
-/// CLEAN ///
 
+/// CLEAN ///
 #if defined(_WIN32) || defined(_WIN64)
     void serverCleanWIN(void) {
         running = 0;
         closesocket(serverSocket);
         WSACleanup();
+        serverSocket = NULL;
     }
 #else
     void serverCleanPOSIX(void) {
         running = 0;
         close(serverSocket);
+        serverSocket = 0;
     }
 #endif
 
