@@ -7,7 +7,7 @@
 static U8 running = 0;
 
 #if defined(_WIN32) || defined(_WIN64)
-    static I32 serverSocket = NULL;
+    static SOCKET serverSocket = NULL;
 #else
     static I32 serverSocket = 0;
 #endif
@@ -16,6 +16,10 @@ static U8 running = 0;
 #if defined(_WIN32) || defined(_WIN64)
     void serverListenWIN(void) {
         while (running) {
+            if (listen(server_fd, 1) == SOCKET_ERROR) {
+                println("Server listen failed");
+                serverClean();
+            }
         }
     }
 #else
@@ -44,6 +48,8 @@ void serverListen(void) {
 #if defined(_WIN32) || defined(_WIN64)
     void serverCleanWIN(void) {
         running = 0;
+        closesocket(serverSocket);
+        WSACleanup();
     }
 #else
     void serverCleanPOSIX(void) {
@@ -63,7 +69,32 @@ void serverClean(void) {
 
 #if defined(_WIN32) || defined(_WIN64)
     void serverInitWIN(void) {
+        struct sockaddr_in serverAddress;
+        WSADATA wsaData = NULL;
 
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            println("WSAStartup failed")
+            exit(1);
+        }
+
+        serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (serverSocket == INVALID_SOCKET) {
+            println("Server socket creation failed");
+            WSACleanup();
+            exit(1);
+        }
+
+        memset(&serverAddress, 0, sizeof(serverAddress));
+        serverAddress.sin_family = AF_INET;
+        serverAddress.sin_addr.s_addr = INADDR_ANY;
+        serverAddress.sin_port = htons(TCP_PORT);
+
+        if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
+            println("Server bind failed");
+            serverClean();
+        }
+
+        serverListen();
     }
 #else
     void serverInitPOSIX(void) {
