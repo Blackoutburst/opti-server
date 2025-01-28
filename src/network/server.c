@@ -70,7 +70,7 @@ void serverClean(void) {
 #if defined(_WIN32) || defined(_WIN64)
     void serverInitWIN(void) {
         struct sockaddr_in serverAddress;
-        WSADATA wsaData = NULL;
+        WSADATA wsaData;
 
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             println("WSAStartup failed")
