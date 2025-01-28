@@ -12,6 +12,43 @@ static U8 running = 0;
     static I32 serverSocket = 0;
 #endif
 
+/// ACCEPT ///
+#if defined(_WIN32) || defined(_WIN64)
+    void serverAcceptWIN(void) {
+        struct sockaddr_in clientAddress;
+        socklen_t clientLength;
+        I32 clientSocket = 0;
+
+        clientLength = sizeof(clientAddress);
+        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (clientSocket == INVALID_SOCKET) {
+            println("Client accept failed");
+        }
+        // Start thread to read client data
+    }
+#else
+    void serverAcceptPOSIX(void) {
+        struct sockaddr_in clientAddress;
+        socklen_t clientLength;
+        I32 clientSocket = 0;
+
+        clientLength = sizeof(clientAddress);
+        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (clientSocket < 0) {
+            println("Client accept failed");
+        }
+        // Start thread to read client data
+    }
+#endif
+
+void serverAccept(void) {
+    #if defined(_WIN32) || defined(_WIN64)
+        serverAcceptWIN();
+    #else
+        serverAcceptPOSIX();
+    #endif
+}
+
 /// LISTEN ///
 #if defined(_WIN32) || defined(_WIN64)
     void serverListenWIN(void) {
@@ -20,6 +57,8 @@ static U8 running = 0;
                 println("Server listen failed");
                 serverClean();
             }
+
+            serverAccept();
         }
     }
 #else
@@ -29,6 +68,8 @@ static U8 running = 0;
                 println("Server listen failed");
                 serverClean();
             }
+
+            serverAccept();
         }
     }
 #endif

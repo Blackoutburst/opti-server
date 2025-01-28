@@ -20,15 +20,18 @@
 
 
 #if defined(_WIN32) || defined(_WIN64)
+    void serverAcceptWIN(void);
     void serverListenWIN(void);
     void serverCleanWIN(void);
     void serverInitWIN(void);
 #else
+    void serverAcceptPOSIX(void);
     void serverListenPOSIX(void);
     void serverCleanPOSIX(void);
     void serverInitPOSIX(void);
 #endif
 
+void serverAccept(void);
 void serverListen(void);
 void serverClean(void);
 void serverInit(void);
