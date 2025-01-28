@@ -12,6 +12,10 @@
 
         return thread;
     }
+
+    void joinThread(HANDLE thread) {
+        WaitForSingleObject(thread, INFINITE);
+    }
 #else
     pthread_t createThread(void* (*method)(void *), void *arg) {
         pthread_t thread;
@@ -22,5 +26,9 @@
         }
 
         return thread;
+    }
+
+    void joinThread(pthread_t thread) {
+        pthread_join(thread, 0);
     }
 #endif
