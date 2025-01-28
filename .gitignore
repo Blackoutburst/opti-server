@@ -1,6 +1,6 @@
 #macOS
 .DS_Store
-server.dSYM/
+*.dSYM/
 
 #binary
 server
