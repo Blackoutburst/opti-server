@@ -48,6 +48,7 @@ static U8 running = 0;
 
     }
 #endif
+
 void serverWrite(U8* buffer) {
     #if defined(_WIN32) || defined(_WIN64)
         serverWriteWIN(buffer);
@@ -154,8 +155,8 @@ void serverClean(void) {
         serverCleanPOSIX();
     #endif
 }
-/// INIT ///
 
+/// INIT ///
 #if defined(_WIN32) || defined(_WIN64)
     void serverInitWIN(void) {
         struct sockaddr_in serverAddress;
