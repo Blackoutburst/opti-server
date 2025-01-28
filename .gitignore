@@ -1,8 +1,8 @@
-### macOS ###
+### Mac OS ###
 .DS_Store
 *.dSYM/
 
-### binary ###
+### Binary ###
 server
 server.exe
 server.out
