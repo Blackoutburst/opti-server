@@ -21,7 +21,6 @@
 #define MAX_TCP_CLIENT 16
 #define BUFFER_SIZE 5000
 
-
 typedef struct tcpClient TCP_CLIENT;
 
 struct tcpClient {
@@ -37,7 +36,6 @@ struct tcpClient {
     U8 renderDistance;
     U8 name[64];
 };
-
 
 #if defined(_WIN32) || defined(_WIN64)
     void addClient(SOCKET socket, HANDLE thread);
@@ -56,7 +54,6 @@ struct tcpClient {
     void serverCleanPOSIX(void);
     void serverInitPOSIX(void);
 #endif
-
 
 void removeClient(U32 id);
 void serverWrite(U8* buffer, U32 size);
