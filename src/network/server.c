@@ -32,7 +32,7 @@ void addClient(SOCKET socket, HANDLE thread) {
     client->thread = thread;
     client->position.x = 0;
     client->position.y = 0;
-    client->position.z = 0;
+    client->position.z = 0;c
     client->renderDistance = 2;
     memcpy(client->name, name, 64);
     free(name);
@@ -114,21 +114,27 @@ void removeClient(U32 id) {
 
 /// WRITE ///
 #if defined(_WIN32) || defined(_WIN64)
-    void serverWriteWIN(U8* buffer) {
-
+    void serverWriteWIN(U8* buffer, U32 size) {
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            send(tcpClients[i]->socket, buffer, size, 0);
+        }
     }
 #else
-    void serverWritePOSIX(U8* buffer) {
-
+    void serverWritePOSIX(U8* buffer, U32 size) {
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            send(tcpClients[i]->socket, buffer, size, 0);
+        }
     }
 #endif
 
-void serverWrite(U8* buffer) {
+void serverWrite(U8* buffer, U32 size) {
     mutexLock(&mutex);
         #if defined(_WIN32) || defined(_WIN64)
-            serverWriteWIN(buffer);
+            serverWriteWIN(buffer, size);
         #else
-            serverWritePOSIX(buffer);
+            serverWritePOSIX(buffer, size);
         #endif
     mutexUnlock(&mutex);
 }
@@ -217,24 +223,42 @@ void serverListen(void) {
         closesocket(serverSocket);
         WSACleanup();
         serverSocket = NULL;
+
+        clfor (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            close(tcpClients[i]->socket);
+            joinThread(tcpClients[i]->thread);
+        }
     }
 #else
     void serverCleanPOSIX(void) {
         running = 0;
         close(serverSocket);
         serverSocket = 0;
+
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            close(tcpClients[i]->socket);
+            joinThread(tcpClients[i]->thread);
+        }
     }
 #endif
 
 void serverClean(void) {
     mutexDestroy(&mutex);
-    free(tcpClients);
 
     #if defined(_WIN32) || defined(_WIN64)
         serverCleanWIN();
     #else
         serverCleanPOSIX();
     #endif
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] == NULL) continue;
+        free(tcpClients[i]);
+        tcpClients[i] = NULL;
+    }
+    free(tcpClients);
 }
 
 /// INIT ///
