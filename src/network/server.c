@@ -2,22 +2,97 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils/ioUtils.h"
+#include "utils/string.h"
+#include "utils/mutex.h"
 #include "utils/thread.h"
 #include "network/server.h"
 
 static U8 running = 0;
+static U32 clientId = 0;
+
+static TCP_CLIENT** tcpClients = NULL;
 
 #if defined(_WIN32) || defined(_WIN64)
+    static CRITICAL_SECTION mutex;
     static SOCKET serverSocket = NULL;
 #else
+    static pthread_mutex_t mutex;
     static I32 serverSocket = 0;
 #endif
+
+/// CLIENTS ///
+#if defined(_WIN32) || defined(_WIN64)
+void addClient(SOCKET socket, HANDLE thread) {
+    mutexLock(&mutex);
+
+    U8* name = encodeString((const U8*)"Guest", 64);
+    TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
+    client->id = clientId;
+    cliclent->socket = socket;
+    client->thread = thread;
+    client->position.x = 0;
+    client->position.y = 0;
+    client->position.z = 0;
+    client->renderDistance = 2;
+    memcpy(client->name, name, 64);
+    free(name);
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] != NULL) continue;
+        tcpClients[i] = client;
+        break;
+    }
+
+    clientId++;
+
+    mutexUnlock(&mutex);
+}
+#else
+void addClient(I32 socket, pthread_t thread) {
+    mutexLock(&mutex);
+
+    U8* name = encodeString((const U8*)"Guest", 64);
+    TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
+    client->id = clientId;
+    client->socket = socket;
+    client->thread = thread;
+    client->position.x = 0;
+    client->position.y = 0;
+    client->position.z = 0;
+    client->renderDistance = 2;
+    memcpy(client->name, name, 64);
+    free(name);
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] != NULL) continue;
+        tcpClients[i] = client;
+        break;
+    }
+
+    clientId++;
+
+    mutexUnlock(&mutex);
+}
+#endif
+
+void removeClient(U32 id) {
+    mutexLock(&mutex);
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] == NULL) continue;
+        if (tcpClients[i]->id == id) {
+            free(tcpClients[i]);
+            tcpClients[i] = NULL;
+        }
+    }
+
+    mutexUnlock(&mutex);
+}
 
 /// READ ///
 #if defined(_WIN32) || defined(_WIN64)
      DWORD WINAPI serverRead(LPVOID arg) {
         SOCKET clientSocket = *(SOCKET*)arg;
-        free(arg);
 
         while (running && clientSocket != INVALID_SOCKET) {
             //recv(clientSocket, buffer, size, 0);
@@ -28,7 +103,6 @@ static U8 running = 0;
 #else
     void* serverRead(void* arg) {
         I32 clientSocket = *(I32*)arg;
-        free(arg);
 
         while (running && clientSocket >= 0) {
             //recv(clientSocket, buffer, size, 0);
@@ -50,11 +124,13 @@ static U8 running = 0;
 #endif
 
 void serverWrite(U8* buffer) {
-    #if defined(_WIN32) || defined(_WIN64)
-        serverWriteWIN(buffer);
-    #else
-        serverWritePOSIX(buffer);
-    #endif
+    mutexLock(&mutex);
+        #if defined(_WIN32) || defined(_WIN64)
+            serverWriteWIN(buffer);
+        #else
+            serverWritePOSIX(buffer);
+        #endif
+    mutexUnlock(&mutex);
 }
 
 /// ACCEPT ///
@@ -62,29 +138,31 @@ void serverWrite(U8* buffer) {
     void serverAcceptWIN(void) {
         struct sockaddr_in clientAddress;
         socklen_t clientLength;
-        SOCKET* clientSocket = malloc(sizeof(SOCKET));
+        SOCKET clientSocket = NULL;
 
         clientLength = sizeof(clientAddress);
-        *clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
-        if (*clientSocket == INVALID_SOCKET) {
+        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (clientSocket == INVALID_SOCKET) {
             println("Client accept failed");
         }
 
-        createThread(serverRead, clientSocket);
+        HANDLE thread = createThread(serverRead, &clientSocket);
+        addClient(clientSocket, thread);
     }
 #else
     void serverAcceptPOSIX(void) {
         struct sockaddr_in clientAddress;
         socklen_t clientLength;
-        I32* clientSocket = malloc(sizeof(I32));
+        I32 clientSocket = 0;
 
         clientLength = sizeof(clientAddress);
-        *clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
-        if (*clientSocket < 0) {
+        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
+        if (clientSocket < 0) {
             println("Client accept failed");
         }
 
-        createThread(serverRead, clientSocket);
+        pthread_t thread = createThread(serverRead, &clientSocket);
+        addClient(clientSocket, thread);
     }
 #endif
 
@@ -149,6 +227,9 @@ void serverListen(void) {
 #endif
 
 void serverClean(void) {
+    mutexDestroy(&mutex);
+    free(tcpClients);
+
     #if defined(_WIN32) || defined(_WIN64)
         serverCleanWIN();
     #else
@@ -211,6 +292,11 @@ void serverClean(void) {
 #endif
 
 void serverInit(void) {
+    mutexCreate(&mutex);
+
+    tcpClients = malloc(sizeof(TCP_CLIENT*) * MAX_TCP_CLIENT);
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) tcpClients[i] = NULL;
+
     #if defined(_WIN32) || defined(_WIN64)
         serverInitWIN();
     #else

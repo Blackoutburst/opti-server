@@ -1,10 +1,7 @@
 #pragma once
 
 #include "utils/types.h"
-
-#define TCP_PORT 15000
-#define TCP_LISTENT_QUEUE_SIZE 8
-#define BUFFER_SIZE 5000
+#include "utils/vector.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <winsock2.h>
@@ -19,8 +16,31 @@
     #include <pthread.h>
 #endif
 
+#define TCP_PORT 15000
+#define TCP_LISTENT_QUEUE_SIZE 8
+#define MAX_TCP_CLIENT 16
+#define BUFFER_SIZE 5000
+
+
+typedef struct tcpClient TCP_CLIENT;
+
+struct tcpClient {
+    U32 id;
+    #if defined(_WIN32) || defined(_WIN64)
+        SOCKET socket;
+        HANDLE thread;
+    #else
+        I32 socket;
+        pthread_t thread;
+    #endif
+    VECTORF position;
+    U8 renderDistance;
+    U8 name[64];
+};
+
 
 #if defined(_WIN32) || defined(_WIN64)
+    void addClient(SOCKET socket, HANDLE thread);
     DWORD WINAPI serverRead(LPVOID arg);
     void serverWriteWIN(U8* buffer);
     void serverAcceptWIN(void);
@@ -28,6 +48,7 @@
     void serverCleanWIN(void);
     void serverInitWIN(void);
 #else
+    void addClient(I32 socket, pthread_t thread);
     void* serverRead(void* arg);
     void serverWritePOSIX(U8* buffer);
     void serverAcceptPOSIX(void);
@@ -36,6 +57,8 @@
     void serverInitPOSIX(void);
 #endif
 
+
+void removeClient(U32 id);
 void serverWrite(U8* buffer);
 void serverAccept(void);
 void serverListen(void);
