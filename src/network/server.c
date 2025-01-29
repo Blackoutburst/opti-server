@@ -81,6 +81,7 @@ void removeClient(U32 id) {
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
         if (tcpClients[i] == NULL) continue;
         if (tcpClients[i]->id == id) {
+            close(tcpClients[i]->socket);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
         }
