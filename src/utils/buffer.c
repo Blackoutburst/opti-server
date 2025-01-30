@@ -124,33 +124,33 @@ F64 getF64(U8** buffer) {
     return u.f;
 }
 
-void putI8(U16* index, I8 value, U8* buffer)  {
+void putI8(U32* index, I8 value, U8* buffer)  {
     buffer[*index] = value;
 
     *index += sizeof(I8);
 }
 
-void putU8(U16* index, U8 value, U8* buffer) {
+void putU8(U32* index, U8 value, U8* buffer) {
     buffer[*index] = value;
 
    *index += sizeof(U8);
 }
 
-void putI16(U16* index, I16 value, U8* buffer) {
+void putI16(U32* index, I16 value, U8* buffer) {
     buffer[*index  ] = (value >> 8) & 0xFF;
     buffer[*index+1] = (value)      & 0xFF;
 
     *index += sizeof(I16);
 }
 
-void putU16(U16* index, U16 value, U8* buffer) {
+void putU16(U32* index, U16 value, U8* buffer) {
     buffer[*index  ] = (value >> 8) & 0xFF;
     buffer[*index+1] = (value)      & 0xFF;
 
     *index += sizeof(U16);
 }
 
-void putI32(U16* index, I32 value, U8* buffer) {
+void putI32(U32* index, I32 value, U8* buffer) {
     buffer[*index  ] = (value >> 24) & 0xFF;
     buffer[*index+1] = (value >> 16) & 0xFF;
     buffer[*index+2] = (value >> 8 ) & 0xFF;
@@ -159,7 +159,7 @@ void putI32(U16* index, I32 value, U8* buffer) {
     *index += sizeof(I32);
 }
 
-void putU32(U16* index, U32 value, U8* buffer) {
+void putU32(U32* index, U32 value, U8* buffer) {
     buffer[*index  ] = (value >> 24) & 0xFF;
     buffer[*index+1] = (value >> 16) & 0xFF;
     buffer[*index+2] = (value >> 8 ) & 0xFF;
@@ -168,7 +168,7 @@ void putU32(U16* index, U32 value, U8* buffer) {
     *index += sizeof(U32);
 }
 
-void putI64(U16* index, I64 value, U8* buffer) {
+void putI64(U32* index, I64 value, U8* buffer) {
     buffer[*index  ] = (value >> 56) & 0xFF;
     buffer[*index+1] = (value >> 48) & 0xFF;
     buffer[*index+2] = (value >> 40) & 0xFF;
@@ -181,7 +181,7 @@ void putI64(U16* index, I64 value, U8* buffer) {
     *index += sizeof(I64);
 }
 
-void putU64(U16* index, U64 value, U8* buffer) {
+void putU64(U32* index, U64 value, U8* buffer) {
     buffer[*index  ] = (value >> 56) & 0xFF;
     buffer[*index+1] = (value >> 48) & 0xFF;
     buffer[*index+2] = (value >> 40) & 0xFF;
@@ -194,7 +194,7 @@ void putU64(U16* index, U64 value, U8* buffer) {
     *index += sizeof(U64);
 }
 
-void putF32(U16* index, F32 value, U8* buffer) {
+void putF32(U32* index, F32 value, U8* buffer) {
     union {
         F32 f;
         U32 u;
@@ -210,7 +210,7 @@ void putF32(U16* index, F32 value, U8* buffer) {
     *index += sizeof(F32);
 }
 
-void putF64(U16* index, F64 value, U8* buffer) {
+void putF64(U32* index, F64 value, U8* buffer) {
     union {
         F64 f;
         U64 u;
