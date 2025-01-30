@@ -3,15 +3,15 @@
 #include "utils/types.h"
 
 #if defined(_WIN32) || defined(_WIN64)
-    #include <synchapi.h>
+    #include <winsock2.h>
 #else
     #include <pthread.h>
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-    HANDLE createThread(DWORD WINAPI (*method)(LPVOID), void *arg);
+    HANDLE startThread(DWORD WINAPI (*method)(LPVOID), void *arg);
     void joinThread(HANDLE thread);
 #else
-    pthread_t createThread(void* (*method)(void *), void *arg);
+    pthread_t startThread(void* (*method)(void *), void *arg);
     void joinThread(pthread_t thread);
 #endif

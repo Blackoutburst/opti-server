@@ -15,7 +15,7 @@ static TCP_CLIENT** tcpClients = NULL;
 
 #if defined(_WIN32) || defined(_WIN64)
     static CRITICAL_SECTION mutex;
-    static SOCKET serverSocket = NULL;
+    static SOCKET serverSocket = 0;
 #else
     static pthread_mutex_t mutex;
     static I32 serverSocket = 0;
@@ -29,11 +29,11 @@ void addClient(SOCKET socket, HANDLE thread) {
     U8* name = encodeString((const U8*)"Guest", 64);
     TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
     client->id = clientId;
-    cliclent->socket = socket;
+    client->socket = socket;
     client->thread = thread;
     client->position.x = 0;
     client->position.y = 0;
-    client->position.z = 0;c
+    client->position.z = 0;
     client->renderDistance = 2;
     memcpy(client->name, name, 64);
     free(name);
@@ -69,7 +69,7 @@ TCP_CLIENT* getClientBysocket(SOCKET socket) {
 void addClient(I32 socket, pthread_t thread) {
     mutexLock(&mutex);
 
-    U8* name = encodeString((const U8*)"Guest", 64);
+    U8* name = encodeString((I8*)"Guest", 64);
     TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
     client->id = clientId;
     client->socket = socket;
@@ -116,7 +116,7 @@ void removeClient(U32 id) {
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
         if (tcpClients[i] == NULL) continue;
         if (tcpClients[i]->id == id) {
-            close(tcpClients[i]->socket);
+            closesocket(tcpClients[i]->socket);
             #if defined(_WIN32) || defined(_WIN64)
                 tcpClients[i]->socket = INVALID_SOCKET;
             #else
@@ -211,7 +211,7 @@ void removeClient(U32 id) {
     void serverWriteWIN(U8* buffer, U32 size) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
-            send(tcpClients[i]->socket, buffer, size, 0);
+            send(tcpClients[i]->socket, (I8*)buffer, size, 0);
         }
     }
 #else
@@ -238,7 +238,7 @@ void serverWrite(U8* buffer, U32 size) {
     void serverAcceptWIN(void) {
         struct sockaddr_in clientAddress;
         socklen_t clientLength;
-        SOCKET clientSocket = NULL;
+        SOCKET clientSocket = 0;
 
         clientLength = sizeof(clientAddress);
         clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
@@ -246,7 +246,7 @@ void serverWrite(U8* buffer, U32 size) {
             println("Client accept failed");
         }
 
-        HANDLE thread = createThread(serverRead, &clientSocket);
+        HANDLE thread = startThread(serverRead, &clientSocket);
         addClient(clientSocket, thread);
     }
 #else
@@ -261,7 +261,7 @@ void serverWrite(U8* buffer, U32 size) {
             println("Client accept failed");
         }
 
-        pthread_t thread = createThread(serverRead, &clientSocket);
+        pthread_t thread = startThread(serverRead, &clientSocket);
         addClient(clientSocket, thread);
     }
 #endif
@@ -278,7 +278,7 @@ void serverAccept(void) {
 #if defined(_WIN32) || defined(_WIN64)
     void serverListenWIN(void) {
         while (running) {
-            if (listen(server_fd, TCP_LISTENT_QUEUE_SIZE) == SOCKET_ERROR) {
+            if (listen(serverSocket, TCP_LISTENT_QUEUE_SIZE) == SOCKET_ERROR) {
                 println("Server listen failed");
                 serverClean();
             }
@@ -316,11 +316,11 @@ void serverListen(void) {
         running = 0;
         closesocket(serverSocket);
         WSACleanup();
-        serverSocket = NULL;
+        serverSocket = 0;
 
-        clfor (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
-            close(tcpClients[i]->socket);
+            closesocket(tcpClients[i]->socket);
             joinThread(tcpClients[i]->thread);
         }
     }
@@ -362,7 +362,7 @@ void serverClean(void) {
         WSADATA wsaData;
 
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            println("WSAStartup failed")
+            println("WSAStartup failed");
             exit(1);
         }
 
