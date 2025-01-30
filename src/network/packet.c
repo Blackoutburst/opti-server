@@ -30,7 +30,7 @@ U16 getServerPacketSize(I8 packetID) {
         case SERVER_PACKET_UPDATE_BLOCK:
             return sizeof(S01UPDATE_BLOCK);
         case SERVER_PACKET_BLOCK_BULK_EDIT:
-            return sizeof(S02BLOCK_BULK_EDIT);
+            return 0;//sizeof(S02BLOCK_BULK_EDIT); needs special handling based on data
         case SERVER_PACKET_CHAT:
             return sizeof(S03CHAT);
         case SERVER_PACKET_CLIENT_METADATA:
