@@ -6,6 +6,7 @@
 #include "utils/mutex.h"
 #include "utils/thread.h"
 #include "network/server.h"
+#include "network/packet.h"
 
 static U8 running = 0;
 static U32 clientId = 0;
@@ -47,6 +48,23 @@ void addClient(SOCKET socket, HANDLE thread) {
 
     mutexUnlock(&mutex);
 }
+
+TCP_CLIENT* getClientBysocket(SOCKET socket) {
+    mutexLock(&mutex);
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] == NULL) continue;
+        if (tcpClients[i]->socket == socket) {
+            mutexUnlock(&mutex);
+            return tcpClients[i];
+        }
+        break;
+    }
+
+    mutexUnlock(&mutex);
+
+    return NULL;
+}
 #else
 void addClient(I32 socket, pthread_t thread) {
     mutexLock(&mutex);
@@ -73,6 +91,23 @@ void addClient(I32 socket, pthread_t thread) {
 
     mutexUnlock(&mutex);
 }
+
+TCP_CLIENT* getClientBysocket(I32 socket) {
+    mutexLock(&mutex);
+
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (tcpClients[i] == NULL) continue;
+        if (tcpClients[i]->socket == socket) {
+            mutexUnlock(&mutex);
+            return tcpClients[i];
+        }
+        break;
+    }
+
+    mutexUnlock(&mutex);
+
+    return NULL;
+}
 #endif
 
 void removeClient(U32 id) {
@@ -82,6 +117,11 @@ void removeClient(U32 id) {
         if (tcpClients[i] == NULL) continue;
         if (tcpClients[i]->id == id) {
             close(tcpClients[i]->socket);
+            #if defined(_WIN32) || defined(_WIN64)
+                tcpClients[i]->socket = INVALID_SOCKET;
+            #else
+                tcpClients[i]->socket = -1;
+            #endif
             free(tcpClients[i]);
             tcpClients[i] = NULL;
         }
@@ -94,9 +134,36 @@ void removeClient(U32 id) {
 #if defined(_WIN32) || defined(_WIN64)
      DWORD WINAPI serverRead(LPVOID arg) {
         SOCKET clientSocket = *(SOCKET*)arg;
+        TCP_CLIENT* client = getClientBysocket(clientSocket);
 
-        while (running && clientSocket != INVALID_SOCKET) {
-            //recv(clientSocket, buffer, size, 0);
+        while (running && client->socket != INVALID_SOCKET) {
+            I8 packetId = 0;
+            if (recv(client->socket, &packetId, 1, 0) <= 0) {
+                println("Data read failed");
+                removeClient(client->id);
+                return 0;
+            }
+
+            U16 size = getServerPacketSize(packetId);
+            if (size <= 0) {
+                printf("Invalid packet %i size: %i\n", packetId, size);
+                return 0;
+            }
+
+            U8* dataBuffer = malloc(size);
+            U32 totalBytesRead = 0;
+            while (totalBytesRead < size) {
+                I32 bytesRead = recv(client->socket, (I8*)(dataBuffer + totalBytesRead), size - totalBytesRead, 0);
+                totalBytesRead += bytesRead;
+
+                if (bytesRead <= 0) {
+                    println("Data read failed");
+                    removeClient(client->id);
+                    return 0;
+                }
+            }
+
+            // TODO do shit with buffer
         }
 
         return 0;
@@ -104,9 +171,35 @@ void removeClient(U32 id) {
 #else
     void* serverRead(void* arg) {
         I32 clientSocket = *(I32*)arg;
+        TCP_CLIENT* client = getClientBysocket(clientSocket);
 
-        while (running && clientSocket >= 0) {
-            //recv(clientSocket, buffer, size, 0);
+        while (running && client->socket >= 0) {
+            I8 packetId = 0;
+            if (recv(client->socket, &packetId, 1, 0) <= 0) {
+                println("Data read failed");
+                removeClient(client->id);
+                return NULL;
+            }
+            U16 size = getServerPacketSize(packetId);
+            if (size <= 0) {
+                printf("Invalid packet %i size: %i\n", packetId, size);
+                return NULL;
+            }
+
+            U8* dataBuffer = malloc(size);
+            U32 totalBytesRead = 0;
+            while (totalBytesRead < size) {
+                I32 bytesRead = recv(client->socket, dataBuffer + totalBytesRead, size - totalBytesRead, 0);
+                totalBytesRead += bytesRead;
+
+                if (bytesRead <= 0) {
+                    println("Data read failed");
+                    removeClient(client->id);
+                    return NULL;
+                }
+            }
+
+            // TODO do shit with buffer
         }
 
         return NULL;

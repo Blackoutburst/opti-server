@@ -39,6 +39,7 @@ struct tcpClient {
 
 #if defined(_WIN32) || defined(_WIN64)
     void addClient(SOCKET socket, HANDLE thread);
+    TCP_CLIENT* getClientBysocket(SOCKET socket);
     DWORD WINAPI serverRead(LPVOID arg);
     void serverWriteWIN(U8* buffer, U32 size);
     void serverAcceptWIN(void);
@@ -47,6 +48,7 @@ struct tcpClient {
     void serverInitWIN(void);
 #else
     void addClient(I32 socket, pthread_t thread);
+    TCP_CLIENT* getClientBysocket(I32 socket);
     void* serverRead(void* arg);
     void serverWritePOSIX(U8* buffer, U32 size);
     void serverAcceptPOSIX(void);
