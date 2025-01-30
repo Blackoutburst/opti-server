@@ -21,10 +21,12 @@ typedef struct S04ClientMetadata S04CLIENT_METADATA;
 
 #pragma pack(push, 1)
 struct C00PacketIdentification {
+    U8 id;
     U32 entityId;
 };
 
 struct C01PacketAddEntity {
+    U8 id;
     U32 entityId;
     F32 x;
     F32 y;
@@ -35,10 +37,12 @@ struct C01PacketAddEntity {
 };
 
 struct C02RemoveEntity {
+    U8 id;
     U32 entityId;
 };
 
 struct C03UpdateEntity {
+    U8 id;
     U32 entityId;
     F32 x;
     F32 y;
@@ -48,6 +52,7 @@ struct C03UpdateEntity {
 };
 
 struct C04SendChunk {
+    U8 id;
     I32 x;
     I32 y;
     I32 z;
@@ -55,6 +60,7 @@ struct C04SendChunk {
 };
 
 struct C05SendMonotypeChunk {
+    U8 id;
     I32 x;
     I32 y;
     I32 z;
@@ -62,16 +68,17 @@ struct C05SendMonotypeChunk {
 };
 
 struct C06Chat {
+    U8 id;
     U8 message[4096];
 };
 
 struct C07UpdateEntityMetadata {
+    U8 id;
     U32 entityId;
     U8 name[64];
 };
 
 struct S00UpdateEntity {
-    U8 id;
     F32 x;
     F32 y;
     F32 z;
@@ -80,7 +87,6 @@ struct S00UpdateEntity {
 };
 
 struct S01UpdateBlock {
-    U8 id;
     U8 type;
     I32 x;
     I32 y;
@@ -95,13 +101,11 @@ struct BlockBulkEdit {
 };
 
 struct S02BlockBulkEdit {
-    U8 id;
     U32 blockCount;
     BLOCK_BULK_EDIT* blocks;
 };
 
 struct S03Chat {
-    U8 id;
     U8 message[4096];
 };
 
