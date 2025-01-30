@@ -1,5 +1,5 @@
 ## Information
-- This protocol uses **BIG ENDIAN**
+- Use **BIG ENDIAN** to communicate with the server
 - Server doesn't send empty chunk
 - TCP uses port **15000**
 
