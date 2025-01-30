@@ -54,7 +54,6 @@ U8* encodePacketUpdateEntity(C03UPDATE_ENTITY* packet) {
     putF32(&index, packet->yaw, buffer);
     putF32(&index, packet->pitch, buffer);
 
-
     return buffer;
 }
 
