@@ -26,6 +26,39 @@ CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     }
 }
 
+void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
+    if (client == NULL) return;
+
+    U32 index = chunkHash(chunk->position.x, chunk->position.y, chunk->position.z) % CUBE(client->renderDistance);
+    U32 start = index;
+
+    while (1) {
+        if (!client->chunks[index].used) {
+            client->chunks[index].position.x = chunk->position.x;
+            client->chunks[index].position.y = chunk->position.y;
+            client->chunks[index].position.z = chunk->position.z;
+            client->chunks[index].chunk = chunk;
+            client->chunks[index].used = 1;
+
+            return;
+        } else if (client->chunks[index].used &&
+                  client->chunks[index].position.x == chunk->position.x &&
+                  client->chunks[index].position.y == chunk->position.y &&
+                  client->chunks[index].position.z == chunk->position.z)
+        {
+            chunkClean(client->chunks[index].chunk);
+            client->chunks[index].chunk = chunk;
+            return;
+        }
+
+        index = (index + 1) % CUBE(client->renderDistance);
+
+        if (index == start) {
+            return;
+        }
+    }
+}
+
 CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return NULL;
     if (worldGetChunk(client, x, y, z) != NULL) return NULL;
@@ -33,8 +66,10 @@ CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     // TODO:
     // DB lookup + send if exist
     // if not in DB generate + send
+    CHUNK* c = chunkCreate(x, y, z);
+    worldAddChunk(client, c);
 
-    return NULL;
+    return c;
 }
 
 void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
@@ -50,6 +85,9 @@ void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
             client->chunks[index].position.z == z)
         {
             // TODO: DB save
+            client->chunks[index].position.x = 0;
+            client->chunks[index].position.y = 0;
+            client->chunks[index].position.z = 0;
             client->chunks[index].used = 0;
             chunkClean(client->chunks[index].chunk);
             client->chunks[index].chunk = NULL;
