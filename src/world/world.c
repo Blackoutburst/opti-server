@@ -1,6 +1,9 @@
 #include <stdlib.h>
+#include <string.h>
 #include "utils/math.h"
 #include "world/world.h"
+#include "network/packet.h"
+#include "network/encoder.h"
 
 CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return NULL;
@@ -88,6 +91,39 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
     worldRemoveChunkOutOfRenderDistance(client);
 
-    // TODO do for loop shit to load cube arround player
+    I32 px = TO_CHUNK_POS(client->position.x);
+    I32 py = TO_CHUNK_POS(client->position.y);
+    I32 pz = TO_CHUNK_POS(client->position.z);
+    I32 rd = client->renderDistance * CHUNK_SIZE;
+
+    for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
+    for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
+    for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
+        CHUNK* c = worldLoadChunk(client, x, y, z);
+        if (c == NULL || chunkIsEmpty(c) || y < -32) continue;
+
+        if (chunkIsMonotype(c)) {
+            C05SEND_MONOTYPE_CHUNK* packet = malloc(sizeof(C05SEND_MONOTYPE_CHUNK));
+            packet->id = CLIENT_PACKET_SEND_MONOTYPE_CHUNK;
+            packet->x = x;
+            packet->y = y;
+            packet->z = z;
+            packet->type = c->blocks[0];
+            U8* buffer = encodePacketSendMonotypeChunk(packet);
+            free(packet);
+            serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
+            continue;
+        }
+
+        C04SEND_CHUNK* packet = malloc(sizeof(C04SEND_CHUNK));
+        packet->id = CLIENT_PACKET_SEND_CHUNK;
+        packet->x = x;
+        packet->y = y;
+        packet->z = z;
+        memcpy(packet->blocks, c->blocks, CHUNK_BLOCK_COUNT);
+        U8* buffer = encodePacketSendChunk(packet);
+        free(packet);
+        serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+    }}}
 }
 
