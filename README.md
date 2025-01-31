@@ -10,69 +10,69 @@
 Identification: `0x00`
 | id   | entityId |
 |------|----------|
-| byte | int      |
+| U8   | U32      |
 
 Add Entity: `0x01`
 | id   | entityId | x     | y     | z     | yaw   | pitch | name     |
 |------|----------|-------|-------|-------|-------|-------|----------|
-| byte | int      | float | float | float | float | float | byte[64] |
+| U8   | U32      | F32   | F32   | F32   | F32   | F32   | U8[64]   |
 
 Remove Entity: `0x02`
 | id   | entityId |
 |------|----------|
-| byte | int      |
+| U8   | U32      |
 
 
 Update Entity Position: `0x03`
 | id   | entityId | x     | y     | z     | yaw   | pitch |
 |------|----------|-------|-------|-------|-------|-------|
-| byte | int      | float | float | float | float | float |
+| U8   | U32      | F32   | F32   | F32   | F32   | F32   |
 
 Send Chunk: `0x04`
 | id   | x   | y   | z   | BlockType  |
 |------|-----|-----|-----|------------|
-| byte | int | int | int | byte[4096] |
+| U8   | I32 | I32 | I32 | U8[4096]   |
 
 Send Mono Type Chunk: `0x05`
 | id   | x   | y   | z   | BlockType |
 |------|-----|-----|-----|-----------|
-| byte | int | int | int | byte      |
+| U8   | I32 | I32 | I32 | U8        |
 
 Chat: `0x06`
 | id   | message    |
 |------|------------|
-| byte | byte[4096] |
+| U8   | U8[4096]   |
 
 Update Entity Metadata: `0x07`
 | id   | entityId | name     |
 |------|----------|----------|
-| byte | int      | byte[64] |
+| U8   | U32      | U8[64]   |
 
 ### Server bound
 Update Entity: `0x00`
 | id   | x     | y     | z     | yaw   | pitch |
 |------|-------|-------|-------|-------|-------|
-| byte | float | float | float | float | float |
+| U8   | F32   | F32   | F32   | F32   | F32   |
 
 Update Block: `0x01`
 | id   | BlockType | x   | y   | z   |
 |------|-----------|-----|-----|-----|
-| byte | byte      | int | int | int |
+| U8   | U8        | I32 | I32 | I32 |
 
 Block Bulk Edit: `0x02`
 | id   | blockCount | BlockType | x   | y   | z   | BlockType | x   | y   | z   | ... |
 |------|------------|-----------|-----|-----|-----|-----------|-----|-----|-----|-----|
-| byte | Int        | byte      | int | int | int | byte      | int | int | int | ... |
+| U8   | U32        | U8        | I32 | I32 | I32 | U8        | I32 | I32 | I32 | ... |
 
 Chat: `0x03`
 | id   | message    |
 |------|------------|
-| byte | byte[4096] |
+| U8   | U8[4096]   |
 
 Client metadata: `0x04`
 | id   | renderDistance | name       |
 |------|----------------|------------|
-| byte | byte           | byte[64]   |
+| U8   | U8             | U8[64]     |
 
 
 ### BlockType
