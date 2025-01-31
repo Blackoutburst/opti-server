@@ -187,7 +187,10 @@ void removeClient(U32 id) {
             }
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
-            if (f != NULL) f(client, dataBuffer);
+            if (f != NULL) 
+                f(client, dataBuffer);
+            else
+                free(dataBuffer);
         }
 
         return 0;
@@ -224,7 +227,10 @@ void removeClient(U32 id) {
             }
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
-            if (f != NULL) f(client, dataBuffer);
+            if (f != NULL) 
+                f(client, dataBuffer);
+            else
+                free(dataBuffer);
         }
 
         return NULL;
