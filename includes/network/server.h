@@ -33,6 +33,8 @@ struct tcpClient {
         pthread_t thread;
     #endif
     VECTORF position;
+    F32 yaw;
+    F32 pitch;
     CHUNK_HASHMAP* chunks;
     U8 renderDistance;
     U8 name[64];
