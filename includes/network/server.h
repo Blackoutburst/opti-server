@@ -3,7 +3,6 @@
 #include "utils/types.h"
 #include "utils/vector.h"
 #include "world/chunk.h"
-#include "world/world.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <winsock2.h>
@@ -43,7 +42,8 @@ struct tcpClient {
     void addClient(SOCKET socket, HANDLE thread);
     TCP_CLIENT* getClientBysocket(SOCKET socket);
     DWORD WINAPI serverRead(LPVOID arg);
-    void serverWriteWIN(U8* buffer, U32 size);
+    void serverBroadcastWIN(U8* buffer, U32 size);
+    void serverWriteWIN(TCP_CLIENT* client, U8* buffer, U32 size);
     void serverAcceptWIN(void);
     void serverListenWIN(void);
     void serverCleanWIN(void);
@@ -52,7 +52,8 @@ struct tcpClient {
     void addClient(I32 socket, pthread_t thread);
     TCP_CLIENT* getClientBysocket(I32 socket);
     void* serverRead(void* arg);
-    void serverWritePOSIX(U8* buffer, U32 size);
+    void serverBroadcastPOSIX(U8* buffer, U32 size);
+    void serverWritePOSIX(TCP_CLIENT* client, U8* buffer, U32 size);
     void serverAcceptPOSIX(void);
     void serverListenPOSIX(void);
     void serverCleanPOSIX(void);
@@ -60,7 +61,8 @@ struct tcpClient {
 #endif
 
 void removeClient(U32 id);
-void serverWrite(U8* buffer, U32 size);
+void serverBroadcast(U8* buffer, U32 size);
+void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size);
 void serverAccept(void);
 void serverListen(void);
 void serverClean(void);

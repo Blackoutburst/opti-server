@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils/math.h"
 #include "utils/ioUtils.h"
 #include "utils/string.h"
 #include "utils/mutex.h"
@@ -35,8 +36,8 @@ void addClient(SOCKET socket, HANDLE thread) {
     client->position.y = 0;
     client->position.z = 0;
     client->renderDistance = 2;
-    client->chunks = malloc(sizeof(CHUNK_HASHMAPcl) * (client->renderDistance * client->renderDistance * client->renderDistance));
-    for (U32 i = 0; i < (client->renderDistance * client->renderDistance * client->renderDistance); i++) {
+    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
+    for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
         client->chunks[i].position.x = 0;
         client->chunks[i].position.y = 0;
         client->chunks[i].position.z = 0;
@@ -87,8 +88,8 @@ void addClient(I32 socket, pthread_t thread) {
     client->position.y = 0;
     client->position.z = 0;
     client->renderDistance = 2;
-    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * (client->renderDistance * client->renderDistance * client->renderDistance));
-    for (U32 i = 0; i < (client->renderDistance * client->renderDistance * client->renderDistance); i++) {
+    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
+    for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
         client->chunks[i].position.x = 0;
         client->chunks[i].position.y = 0;
         client->chunks[i].position.z = 0;
@@ -230,27 +231,45 @@ void removeClient(U32 id) {
 
 /// WRITE ///
 #if defined(_WIN32) || defined(_WIN64)
-    void serverWriteWIN(U8* buffer, U32 size) {
+    void serverBroadcastWIN(U8* buffer, U32 size) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
             send(tcpClients[i]->socket, (I8*)buffer, size, 0);
         }
     }
+    void serverWriteWIN(TCP_CLIENT* client, U8* buffer, U32 size) {
+        if (client == NULL) return;
+        send(client->socket, (I8*)buffer, size, 0);
+    }
 #else
-    void serverWritePOSIX(U8* buffer, U32 size) {
+    void serverBroadcastPOSIX(U8* buffer, U32 size) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
             send(tcpClients[i]->socket, buffer, size, 0);
         }
     }
+    void serverWritePOSIX(TCP_CLIENT* client, U8* buffer, U32 size) {
+        if (client == NULL) return;
+        send(client->socket, buffer, size, 0);
+    }
 #endif
 
-void serverWrite(U8* buffer, U32 size) {
+void serverBroadcast(U8* buffer, U32 size) {
     mutexLock(&mutex);
         #if defined(_WIN32) || defined(_WIN64)
-            serverWriteWIN(buffer, size);
+            serverBroadcastWIN(buffer, size);
         #else
-            serverWritePOSIX(buffer, size);
+            serverBroadcastPOSIX(buffer, size);
+        #endif
+    mutexUnlock(&mutex);
+}
+
+void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
+    mutexLock(&mutex);
+        #if defined(_WIN32) || defined(_WIN64)
+            serverWriteWIN(client, buffer, size);
+        #else
+            serverWritePOSIX(client, buffer, size);
         #endif
     mutexUnlock(&mutex);
 }

@@ -3,21 +3,10 @@
 #include "utils/types.h"
 #include "utils/vector.h"
 #include "world/chunk.h"
+#include "network/server.h"
 
-// Forwarding from server.h //
-typedef struct tcpClient TCP_CLIENT;
-struct tcpClient;
-//////////////////////////////
-
-typedef struct chunkHashmap CHUNK_HASHMAP;
-
-struct chunkHashmap {
-    VECTORI position;
-    CHUNK* chunk;
-    U8 used;
-};
-
-CHUNK* worldLoadChunk(TCP_CLIENT* client);
-void worldUnloadChunk(TCP_CLIENT* client);
+CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
+CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
+void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
 void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client);
 void worldUpdateClientChunk(TCP_CLIENT* client);
