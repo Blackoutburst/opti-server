@@ -24,108 +24,106 @@ static TCP_CLIENT** tcpClients = NULL;
 
 /// CLIENTS ///
 #if defined(_WIN32) || defined(_WIN64)
-void addClient(SOCKET socket, HANDLE thread) {
-    mutexLock(&mutex);
+    TCP_CLIENT* addClient(SOCKET socket) {
+        mutexLock(&mutex);
 
-    U8* name = encodeString((const U8*)"Guest", 64);
-    TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
-    client->id = clientId;
-    client->socket = socket;
-    client->thread = thread;
-    client->position.x = 0;
-    client->position.y = 0;
-    client->position.z = 0;
-    client->renderDistance = 2;
-    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
-    for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
-        client->chunks[i].position.x = 0;
-        client->chunks[i].position.y = 0;
-        client->chunks[i].position.z = 0;
-        client->chunks[i].chunk = NULL;
-        client->chunks[i].used = 0;
-    }
-
-    memcpy(client->name, name, 64);
-    free(name);
-
-    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
-        if (tcpClients[i] != NULL) continue;
-        tcpClients[i] = client;
-        break;
-    }
-
-    clientId++;
-
-    mutexUnlock(&mutex);
-}
-
-TCP_CLIENT* getClientBysocket(SOCKET socket) {
-    mutexLock(&mutex);
-
-    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
-        if (tcpClients[i] == NULL) continue;
-        if (tcpClients[i]->socket == socket) {
-            mutexUnlock(&mutex);
-            return tcpClients[i];
+        U8* name = encodeString((const U8*)"Guest", 64);
+        TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT));
+        client->id = clientId;
+        client->socket = socket;
+        client->position.x = 0;
+        client->position.y = 0;
+        client->position.z = 0;
+        client->renderDistance = 2;
+        client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
+        for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
+            client->chunks[i].position.x = 0;
+            client->chunks[i].position.y = 0;
+            client->chunks[i].position.z = 0;
+            client->chunks[i].chunk = NULL;
+            client->chunks[i].used = 0;
         }
-        break;
+
+        memcpy(client->name, name, 64);
+        free(name);
+
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] != NULL) continue;
+            tcpClients[i] = client;
+            break;
+        }
+
+        clientId++;
+
+        mutexUnlock(&mutex);
+        return client;
     }
 
-    mutexUnlock(&mutex);
+    TCP_CLIENT* getClientBysocket(SOCKET socket) {
+        mutexLock(&mutex);
 
-    return NULL;
-}
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            if (tcpClients[i]->socket == socket) {
+                mutexUnlock(&mutex);
+                return tcpClients[i];
+            }
+        }
+
+        mutexUnlock(&mutex);
+
+        return NULL;
+    }
 #else
-void addClient(I32 socket, pthread_t thread) {
-    mutexLock(&mutex);
+    TCP_CLIENT* addClient(I32 socket) {
+        mutexLock(&mutex);
 
-    U8* name = encodeString((const U8*)"Guest", 64);
-    TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
-    client->id = clientId;
-    client->socket = socket;
-    client->thread = thread;
-    client->position.x = 0;
-    client->position.y = 0;
-    client->position.z = 0;
-    client->renderDistance = 2;
-    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
-    for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
-        client->chunks[i].position.x = 0;
-        client->chunks[i].position.y = 0;
-        client->chunks[i].position.z = 0;
-        client->chunks[i].chunk = NULL;
-        client->chunks[i].used = 0;
-    }
-    memcpy(client->name, name, 64);
-    free(name);
-
-    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
-        if (tcpClients[i] != NULL) continue;
-        tcpClients[i] = client;
-        break;
-    }
-
-    clientId++;
-
-    mutexUnlock(&mutex);
-}
-
-TCP_CLIENT* getClientBysocket(I32 socket) {
-    mutexLock(&mutex);
-
-    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
-        if (tcpClients[i] == NULL) continue;
-        if (tcpClients[i]->socket == socket) {
-            mutexUnlock(&mutex);
-            return tcpClients[i];
+        U8* name = encodeString((const U8*)"Guest", 64);
+        TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT));
+        client->id = clientId;
+        client->socket = socket;
+        client->position.x = 0;
+        client->position.y = 0;
+        client->position.z = 0;
+        client->renderDistance = 2;
+        client->chunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance));
+        for (U32 i = 0; i < CUBE(client->renderDistance); i++) {
+            client->chunks[i].position.x = 0;
+            client->chunks[i].position.y = 0;
+            client->chunks[i].position.z = 0;
+            client->chunks[i].chunk = NULL;
+            client->chunks[i].used = 0;
         }
-        break;
+        memcpy(client->name, name, 64);
+        free(name);
+
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] != NULL) continue;
+            tcpClients[i] = client;
+            break;
+        }
+
+        clientId++;
+
+        mutexUnlock(&mutex);
+        return client;
     }
 
-    mutexUnlock(&mutex);
+    TCP_CLIENT* getClientBysocket(I32 socket) {
+        mutexLock(&mutex);
 
-    return NULL;
-}
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            if (tcpClients[i]->socket == socket) {
+                mutexUnlock(&mutex);
+                return tcpClients[i];
+            }
+        }
+
+        mutexUnlock(&mutex);
+
+        return NULL;
+    }
 #endif
 
 void removeClient(U32 id) {
@@ -141,12 +139,10 @@ void removeClient(U32 id) {
                 close(tcpClients[i]->socket);
                 tcpClients[i]->socket = -1;
             #endif
-            for (U32 i = 0; i < (tcpClients[i]->renderDistance * tcpClients[i]->renderDistance * tcpClients[i]->renderDistance); i++) {
-                free(tcpClients[i]->chunks[i].chunk);
-            }
             free(tcpClients[i]->chunks);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
+            break;
         }
     }
 
@@ -156,8 +152,7 @@ void removeClient(U32 id) {
 /// READ ///
 #if defined(_WIN32) || defined(_WIN64)
      DWORD WINAPI serverRead(LPVOID arg) {
-        SOCKET clientSocket = *(SOCKET*)arg;
-        TCP_CLIENT* client = getClientBysocket(clientSocket);
+        TCP_CLIENT* client = (TCP_CLIENT*)arg;
 
         while (running && client->socket != INVALID_SOCKET) {
             I8 packetId = 0;
@@ -170,6 +165,7 @@ void removeClient(U32 id) {
             U16 size = getServerPacketSize(packetId);
             if (size <= 0) {
                 printf("Invalid packet %i size: %i\n", packetId, size);
+                removeClient(client->id);
                 return 0;
             }
 
@@ -186,15 +182,15 @@ void removeClient(U32 id) {
                 }
             }
 
-            // TODO do shit with buffer
+            void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
+            if (f != NULL) f(client, dataBuffer);
         }
 
         return 0;
      }
 #else
     void* serverRead(void* arg) {
-        I32 clientSocket = *(I32*)arg;
-        TCP_CLIENT* client = getClientBysocket(clientSocket);
+        TCP_CLIENT* client = (TCP_CLIENT*)arg;
 
         while (running && client->socket >= 0) {
             I8 packetId = 0;
@@ -206,6 +202,7 @@ void removeClient(U32 id) {
             U16 size = getServerPacketSize(packetId);
             if (size <= 0) {
                 printf("Invalid packet %i size: %i\n", packetId, size);
+                removeClient(client->id);
                 return NULL;
             }
 
@@ -222,7 +219,8 @@ void removeClient(U32 id) {
                 }
             }
 
-            // TODO do shit with buffer
+            void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
+            if (f != NULL) f(client, dataBuffer);
         }
 
         return NULL;
@@ -287,8 +285,9 @@ void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
             println("Client accept failed");
         }
 
-        HANDLE thread = startThread(serverRead, &clientSocket);
-        addClient(clientSocket, thread);
+        TCP_CLIENT* client = addClient(clientSocket);
+        HANDLE thread = startThread(serverRead, client);
+        client->thread = thread;
     }
 #else
     void serverAcceptPOSIX(void) {
@@ -302,8 +301,9 @@ void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
             println("Client accept failed");
         }
 
-        pthread_t thread = startThread(serverRead, &clientSocket);
-        addClient(clientSocket, thread);
+        TCP_CLIENT* client = addClient(clientSocket);
+        pthread_t thread = startThread(serverRead, client);
+        client->thread = thread;
     }
 #endif
 

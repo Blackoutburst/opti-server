@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/types.h"
+#include "network/server.h"
 #include "world/chunk.h"
 
 typedef struct C00PacketIdentification C00IDENTIFICATION;
@@ -111,7 +112,6 @@ struct S03Chat {
 };
 
 struct S04ClientMetadata {
-    U8 id;
     U8 renderDistance;
     U8 name[64];
 };
@@ -137,5 +137,6 @@ enum ServerPackets {
     SERVER_PACKET_CLIENT_METADATA,
 };
 
+void (*getServerPacketFunction(I8 packetId))(TCP_CLIENT *, U8 *);
 U16 getClientPacketSize(I8 packetID);
 U16 getServerPacketSize(I8 packetID);

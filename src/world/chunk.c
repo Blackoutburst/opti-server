@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "world/chunk.h"
 
 U8* chunkGenerate(I32 x, I32 y, I32 z) {
@@ -29,6 +31,7 @@ U8 _chunkIsMonotype(U8* blocks) {
 
 U8 chunkIsMonotype(CHUNK* chunk) {
     if (chunk == NULL) return 0;
+    if (chunk->monotype) return 1;
 
     return _chunkIsMonotype(chunk->blocks);
 }
@@ -61,8 +64,8 @@ CHUNK* chunkCreate(I32 x, I32 y, I32 z) {
     chunk->position.z = z;
 
     U8* blocks = chunkGenerate(x, y, z);
-    U8 isMonotype = _chunkIsMonotype(blocks);
-    if (isMonotype) {
+    chunk->monotype = _chunkIsMonotype(blocks);
+    if (chunk->monotype) {
         chunk->blocks = malloc(sizeof(U8));
         chunk->blocks[0] = blocks[0];
         free(blocks);

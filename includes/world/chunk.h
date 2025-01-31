@@ -11,6 +11,7 @@
 typedef struct chunk CHUNK;
 
 struct chunk {
+    U8 monotype;
     VECTORI position;
     U8* blocks;
 };
