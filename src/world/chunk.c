@@ -1,19 +1,29 @@
 #include <stdlib.h>
 #include "world/chunk.h"
 
+U8* chunkGenerate(I32 x, I32 y, I32 z) {
+    U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);
+    for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocks[i] = 0;
+
+    return blocks;
+}
+
+U8 _chunkIsMonotype(U8* blocks) {
+    I32 previous = blocks[0];
+
+    for (I32 i = 1; i < CHUNK_BLOCK_COUNT; i++) {
+        if (previous != blocks[i])
+            return 0;
+        previous = blocks[i];
+    }
+
+    return 1;
+}
 
 U8 chunkIsMonotype(CHUNK* chunk) {
     if (chunk == NULL) return 0;
 
-    I32 previous = chunk->blocks[0];
-
-    for (I32 i = 1; i < CHUNK_BLOCK_COUNT; i++) {
-        if (previous != chunk->blocks[i])
-            return 0;
-        previous = chunk->blocks[i];
-    }
-
-    return 1;
+    return _chunkIsMonotype(chunk->blocks);
 }
 
 U8 chunkIsEmpty(CHUNK* chunk) {
@@ -42,8 +52,16 @@ CHUNK* chunkCreate(I32 x, I32 y, I32 z) {
     chunk->position.x = x;
     chunk->position.y = y;
     chunk->position.z = z;
-    chunk->blocks = malloc(sizeof(CHUNK_BLOCK_COUNT));
-    for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) chunk->blocks[i] = 0;
+
+    U8* blocks = chunkGenerate(x, y, z);
+    U8 isMonotype = _chunkIsMonotype(blocks);
+    if (isMonotype) {
+        chunk->blocks = malloc(sizeof(U8));
+        chunk->blocks[0] = blocks[0];
+        free(blocks);
+    } else {
+        chunk->blocks = blocks;
+    }
 
     return chunk;
 }
