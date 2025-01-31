@@ -33,7 +33,7 @@ Update Entity Position: `0x03`
 Send Chunk: `0x04`
 | id   | x   | y   | z   | BlockType       |
 |------|-----|-----|-----|-----------------|
-| U8   | I32 | I32 | I32 | U8[CHUNK_SIZE³] |
+| U8   | I32 | I32 | I32 | U8[CHUNK_SIZE^³] |
 
 Send Mono Type Chunk: `0x05`
 | id   | x   | y   | z   | BlockType |
