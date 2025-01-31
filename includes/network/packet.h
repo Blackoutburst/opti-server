@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/types.h"
+#include "world/chunk.h"
 
 typedef struct C00PacketIdentification C00IDENTIFICATION;
 typedef struct C01PacketAddEntity C01ADD_ENTITY;
@@ -56,7 +57,7 @@ struct C04SendChunk {
     I32 x;
     I32 y;
     I32 z;
-    U8 blocks[4096];
+    U8 blocks[CHUNK_BLOCK_COUNT];
 };
 
 struct C05SendMonotypeChunk {

@@ -69,7 +69,7 @@ TCP_CLIENT* getClientBysocket(SOCKET socket) {
 void addClient(I32 socket, pthread_t thread) {
     mutexLock(&mutex);
 
-    U8* name = encodeString((I8*)"Guest", 64);
+    U8* name = encodeString((const U8*)"Guest", 64);
     TCP_CLIENT* client = malloc(sizeof(TCP_CLIENT*));
     client->id = clientId;
     client->socket = socket;
@@ -116,10 +116,11 @@ void removeClient(U32 id) {
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
         if (tcpClients[i] == NULL) continue;
         if (tcpClients[i]->id == id) {
-            closesocket(tcpClients[i]->socket);
             #if defined(_WIN32) || defined(_WIN64)
+                closesocket(tcpClients[i]->socket);
                 tcpClients[i]->socket = INVALID_SOCKET;
             #else
+                close(tcpClients[i]->socket);
                 tcpClients[i]->socket = -1;
             #endif
             free(tcpClients[i]);

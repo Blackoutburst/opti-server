@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "network/encoder.h"
 #include "utils/buffer.h"
+#include "world/chunk.h"
 
 U8* encodePacketIdentification(C00IDENTIFICATION* packet) {
     U8* buffer = malloc(sizeof(C00IDENTIFICATION));
@@ -66,7 +67,7 @@ U8* encodePacketSendChunk(C04SEND_CHUNK* packet) {
     putI32(&index, packet->x, buffer);
     putI32(&index, packet->y, buffer);
     putI32(&index, packet->z, buffer);
-    for (U16 i = 0; i < 4096; i++) putU8(&index, packet->blocks[i], buffer);
+    for (U16 i = 0; i < CHUNK_BLOCK_COUNT; i++) putU8(&index, packet->blocks[i], buffer);
 
     return buffer;
 }
