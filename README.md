@@ -2,6 +2,8 @@
 - Use **BIG ENDIAN** to communicate with the server
 - Server doesn't send empty chunk
 - TCP uses port **15000**
+- Chunk size is **16**
+- Chunks are cubic
 
 ## Current Protocol
 
@@ -29,9 +31,9 @@ Update Entity Position: `0x03`
 | U8   | U32      | F32   | F32   | F32   | F32   | F32   |
 
 Send Chunk: `0x04`
-| id   | x   | y   | z   | BlockType  |
-|------|-----|-----|-----|------------|
-| U8   | I32 | I32 | I32 | U8[4096]   |
+| id   | x   | y   | z   | BlockType       |
+|------|-----|-----|-----|-----------------|
+| U8   | I32 | I32 | I32 | U8[CHUNK_SIZE³] |
 
 Send Mono Type Chunk: `0x05`
 | id   | x   | y   | z   | BlockType |
