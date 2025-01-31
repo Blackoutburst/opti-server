@@ -1,9 +1,7 @@
 #include <stdlib.h>
-#include <string.h>
 #include "utils/math.h"
 #include "world/world.h"
-#include "network/packet.h"
-#include "network/encoder.h"
+#include "network/client.h"
 
 CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return NULL;
@@ -103,27 +101,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         if (c == NULL || chunkIsEmpty(c) || y < -32) continue;
 
         if (chunkIsMonotype(c)) {
-            C05SEND_MONOTYPE_CHUNK* packet = malloc(sizeof(C05SEND_MONOTYPE_CHUNK));
-            packet->id = CLIENT_PACKET_SEND_MONOTYPE_CHUNK;
-            packet->x = x;
-            packet->y = y;
-            packet->z = z;
-            packet->type = c->blocks[0];
-            U8* buffer = encodePacketSendMonotypeChunk(packet);
-            free(packet);
-            serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
+            clientSendMonotypeChunk(client, c);
             continue;
         }
-
-        C04SEND_CHUNK* packet = malloc(sizeof(C04SEND_CHUNK));
-        packet->id = CLIENT_PACKET_SEND_CHUNK;
-        packet->x = x;
-        packet->y = y;
-        packet->z = z;
-        memcpy(packet->blocks, c->blocks, CHUNK_BLOCK_COUNT);
-        U8* buffer = encodePacketSendChunk(packet);
-        free(packet);
-        serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+        clientSendChunk(client, c);
     }}}
 }
 
