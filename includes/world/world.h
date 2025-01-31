@@ -17,4 +17,6 @@ struct chunkHashmap {
     U8 used;
 };
 
+CHUNK* worldLoadChunk(TCP_CLIENT* client);
+void worldUnloadChunk(TCP_CLIENT* client);
 void worldUpdateClientChunk(TCP_CLIENT* client);
