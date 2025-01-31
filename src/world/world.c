@@ -34,9 +34,7 @@ void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
 
     while (1) {
         if (!client->chunks[index].used) {
-            client->chunks[index].position.x = chunk->position.x;
-            client->chunks[index].position.y = chunk->position.y;
-            client->chunks[index].position.z = chunk->position.z;
+            client->chunks[index].position = chunk->position;
             client->chunks[index].chunk = chunk;
             client->chunks[index].used = 1;
 
