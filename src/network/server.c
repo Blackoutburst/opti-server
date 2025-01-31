@@ -35,6 +35,15 @@ void addClient(SOCKET socket, HANDLE thread) {
     client->position.y = 0;
     client->position.z = 0;
     client->renderDistance = 2;
+    client->chunks = malloc(sizeof(CHUNK_HASHMAPcl) * (client->renderDistance * client->renderDistance * client->renderDistance));
+    for (U32 i = 0; i < (client->renderDistance * client->renderDistance * client->renderDistance); i++) {
+        client->chunks[i].position.x = 0;
+        client->chunks[i].position.y = 0;
+        client->chunks[i].position.z = 0;
+        client->chunks[i].chunk = NULL;
+        client->chunks[i].used = 0;
+    }
+
     memcpy(client->name, name, 64);
     free(name);
 
@@ -78,6 +87,14 @@ void addClient(I32 socket, pthread_t thread) {
     client->position.y = 0;
     client->position.z = 0;
     client->renderDistance = 2;
+    client->chunks = malloc(sizeof(CHUNK_HASHMAP) * (client->renderDistance * client->renderDistance * client->renderDistance));
+    for (U32 i = 0; i < (client->renderDistance * client->renderDistance * client->renderDistance); i++) {
+        client->chunks[i].position.x = 0;
+        client->chunks[i].position.y = 0;
+        client->chunks[i].position.z = 0;
+        client->chunks[i].chunk = NULL;
+        client->chunks[i].used = 0;
+    }
     memcpy(client->name, name, 64);
     free(name);
 
@@ -123,6 +140,10 @@ void removeClient(U32 id) {
                 close(tcpClients[i]->socket);
                 tcpClients[i]->socket = -1;
             #endif
+            for (U32 i = 0; i < (tcpClients[i]->renderDistance * tcpClients[i]->renderDistance * tcpClients[i]->renderDistance); i++) {
+                free(tcpClients[i]->chunks[i].chunk);
+            }
+            free(tcpClients[i]->chunks);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
         }
