@@ -1,7 +1,7 @@
 #include "network/packet.h"
 #include "network/client.h"
 
-void (*getServerPacketFunction(I8 packetId))(TCP_CLIENT *, U8 *) {
+void (*getServerPacketFunction(I8 packetId))(TCP_CLIENT*, U8*) {
     switch (packetId) {
         case SERVER_PACKET_UPDATE_ENTITY:
             return &clientReceiveUpdateEntity;
