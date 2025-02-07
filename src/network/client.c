@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "utils/buffer.h"
+#include "utils/string.h"
 #include "utils/math.h"
 #include "database/database.h"
 #include "network/client.h"
@@ -86,6 +87,61 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     chunkClean(chunk);
 }
 
+void clientSendIdentification(TCP_CLIENT* client) {
+    C00IDENTIFICATION packet;
+    packet.id = CLIENT_PACKET_IDENTIFICATION;
+    packet.entityId = getClientId();
+
+    U8* buffer = encodePacketIdentification(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_IDENTIFICATION)); 
+
+    free(buffer);
+}
+
+void clientSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
+    C01ADD_ENTITY packet;
+    packet.id = CLIENT_PACKET_ADD_ENTITY;
+    packet.entityId = entity->id;
+    packet.x = entity->position.x;
+    packet.y = entity->position.y;
+    packet.z = entity->position.z;
+    packet.yaw = entity->yaw;
+    packet.pitch = entity->pitch;
+    memcpy(packet.name, entity->name, 64);
+
+    U8* buffer = encodePacketAddEntity(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+
+    free(buffer);
+}
+
+void clientSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
+    C02REMOVE_ENTITY packet;
+    packet.id = CLIENT_PACKET_REMOVE_ENTITY;
+    packet.entityId = entityId;
+
+    U8* buffer = encodePacketRemoveEntity(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY)); 
+
+    free(buffer);
+}
+
+void clientSendUpdateEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
+    C03UPDATE_ENTITY packet;
+    packet.id = CLIENT_PACKET_UPDATE_ENTITY;
+    packet.entityId = entity->id;
+    packet.x = entity->position.x;
+    packet.y = entity->position.y;
+    packet.z = entity->position.z;
+    packet.yaw = entity->yaw;
+    packet.pitch = entity->pitch;
+
+    U8* buffer = encodePacketUpdateEntity(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY)); 
+
+    free(buffer);
+}
+
 void clientSendChunk(TCP_CLIENT* client, CHUNK* chunk) {
     C04SEND_CHUNK packet;
     packet.id = CLIENT_PACKET_SEND_CHUNK;
@@ -113,3 +169,33 @@ void clientSendMonotypeChunk(TCP_CLIENT* client, CHUNK* chunk) {
 
     free(buffer);
 }
+
+void clientSendChat(TCP_CLIENT* client, const U8* message) {
+    C06CHAT packet;
+    packet.id = CLIENT_PACKET_CHAT;
+
+    U8* encodedString = encodeString(message, 4096);
+    memcpy(packet.message, encodedString, 4096);
+
+    U8* buffer = encodePacketChat(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_CHAT));
+
+    free(encodedString);
+    free(buffer);
+}
+
+void clientSendClientMetadata(TCP_CLIENT* client, TCP_CLIENT* entity) {
+    C07UPDATE_ENTITY_METADATA packet;
+    packet.id = CLIENT_PACKET_UPDATE_ENTITY_METADATA;
+    packet.entityId = entity->id;
+
+    U8* encodedString = encodeString(entity->name, 64);
+    memcpy(packet.name, encodedString, 64);
+
+    U8* buffer = encodePacketEntityMetadata(&packet);
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+
+    free(encodedString);
+    free(buffer);
+}
+

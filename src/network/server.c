@@ -22,6 +22,10 @@ static TCP_CLIENT** tcpClients = NULL;
     static I32 serverSocket = 0;
 #endif
 
+U32 getClientId(void) {
+    return clientId;
+}
+
 /// CLIENTS ///
 #if defined(_WIN32) || defined(_WIN64)
     TCP_CLIENT* addClient(SOCKET socket) {
