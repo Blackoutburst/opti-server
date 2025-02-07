@@ -9,3 +9,6 @@ server.out
 
 ### VS Code ###
 .vscode/
+
+### SQLite ###
+*.db

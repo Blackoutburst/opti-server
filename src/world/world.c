@@ -3,11 +3,8 @@
 #include "utils/math.h"
 #include "world/world.h"
 #include "network/client.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include "world/world.h"
 #include "utils/math.h"
+#include "database/database.h"
 
 void worldRehashChunks(TCP_CLIENT* client) {
     if (client == NULL) return;
@@ -101,10 +98,15 @@ CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return NULL;
     if (worldGetChunk(client, x, y, z) != NULL) return NULL;
 
-    // TODO:
-    // DB lookup + send if exist
-    // if not in DB generate + send
-    CHUNK* c = chunkCreate(x, y, z);
+    CHUNK* c = NULL;
+    U8* data = dbGetChunkBlocks(x, y, z);
+    if (data == NULL) {
+        c = chunkCreate(x, y, z);
+        dbAddChunk(c);
+    } else {
+        c = chunkAssemble(x, y, z, data);
+    }
+    
     worldAddChunk(client, c);
 
     return c;
@@ -122,7 +124,6 @@ void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
             client->chunks[index].position.y == y &&
             client->chunks[index].position.z == z)
         {
-            // TODO: DB save
             client->chunks[index].position.x = 0;
             client->chunks[index].position.y = 0;
             client->chunks[index].position.z = 0;

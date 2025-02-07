@@ -30,4 +30,5 @@ U8 chunkIsMonotype(CHUNK* chunk);
 U8 chunkIsEmpty(CHUNK* chunk);
 U32 chunkHash(I32 x, I32 y, I32 z);
 void chunkClean(CHUNK* chunk);
+CHUNK* chunkAssemble(I32 x, I32 y, I32 z, U8* blocks);
 CHUNK* chunkCreate(I32 x, I32 y, I32 z);

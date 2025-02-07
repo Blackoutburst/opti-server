@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include "utils/ioUtils.h"
 #include "world/chunk.h"
 
 U8* chunkGenerate(I32 x, I32 y, I32 z) {
@@ -55,6 +55,24 @@ void chunkClean(CHUNK* chunk) {
     if (chunk == NULL) return;
     free(chunk->blocks);
     free(chunk);
+}
+
+CHUNK* chunkAssemble(I32 x, I32 y, I32 z, U8* blocks) {
+    CHUNK* chunk = malloc(sizeof(CHUNK));
+    chunk->position.x = x;
+    chunk->position.y = y;
+    chunk->position.z = z;
+
+    chunk->monotype = _chunkIsMonotype(blocks);
+    if (chunk->monotype) {
+        chunk->blocks = malloc(sizeof(U8));
+        chunk->blocks[0] = blocks[0];
+        free(blocks);
+    } else {
+        chunk->blocks = blocks;
+    }
+
+    return chunk;
 }
 
 CHUNK* chunkCreate(I32 x, I32 y, I32 z) {

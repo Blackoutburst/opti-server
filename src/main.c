@@ -3,6 +3,7 @@
 
 #include "utils/types.h"
 #include "network/server.h"
+#include "database/database.h"
 
 void updateRenderDistance(U8* renderDistance, I8* arg) {
     *renderDistance = atoi(arg);
@@ -13,6 +14,8 @@ I32 main(I32 argc, I8** argv) {
     if (argc > 1) updateRenderDistance(&renderDistance, argv[1]);
 
     printf("Starting server with a max render distance of: %i\n", renderDistance);
+    
+    dbInit();
     serverInit();
     serverClean();
     return 0;
