@@ -21,7 +21,6 @@ typedef struct chunkHashmap CHUNK_HASHMAP;
 
 struct chunkHashmap {
     VECTORI position;
-    CHUNK* chunk;
     U8 used;
 };
 

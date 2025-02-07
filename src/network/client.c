@@ -83,6 +83,7 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     }
     
     dbAddChunk(chunk);
+    chunkClean(chunk);
 }
 
 void clientSendChunk(TCP_CLIENT* client, CHUNK* chunk) {

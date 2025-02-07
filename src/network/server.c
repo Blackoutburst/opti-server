@@ -42,7 +42,6 @@ static TCP_CLIENT** tcpClients = NULL;
             client->chunks[i].position.x = 0;
             client->chunks[i].position.y = 0;
             client->chunks[i].position.z = 0;
-            client->chunks[i].chunk = NULL;
             client->chunks[i].used = 0;
         }
 
@@ -95,7 +94,6 @@ static TCP_CLIENT** tcpClients = NULL;
             client->chunks[i].position.x = 0;
             client->chunks[i].position.y = 0;
             client->chunks[i].position.z = 0;
-            client->chunks[i].chunk = NULL;
             client->chunks[i].used = 0;
         }
         memcpy(client->name, name, 64);

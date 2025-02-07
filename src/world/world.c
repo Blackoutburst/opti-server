@@ -13,7 +13,6 @@ void worldRehashChunks(TCP_CLIENT* client) {
 
     for (U32 i = 0; i < CUBE(client->renderDistance * 2); i++) {
         newChunks[i].used = 0;
-        newChunks[i].chunk = NULL;
         newChunks[i].position.x = 0;
         newChunks[i].position.y = 0;
         newChunks[i].position.z = 0;
@@ -40,25 +39,25 @@ void worldRehashChunks(TCP_CLIENT* client) {
 }
 
 
-CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
-    if (client == NULL) return NULL;
+U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
+    if (client == NULL) return 0;
 
     U32 index = chunkHash(x, y, z) % CUBE(client->renderDistance * 2);
     U32 start = index;
 
     while (1) {
         if (!client->chunks[index].used) {
-            return NULL;
+            return 0;
         }
 
         if (client->chunks[index].position.x == x && client->chunks[index].position.y == y && client->chunks[index].position.z == z) {
-            return client->chunks[index].chunk;
+            return 1;
         }
 
         index = (index + 1) % CUBE(client->renderDistance * 2);
 
         if (index == start) {
-            return NULL;
+            return 0;
         }
     }
 }
@@ -72,17 +71,8 @@ void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     while (1) {
         if (!client->chunks[index].used) {
             client->chunks[index].position = chunk->position;
-            client->chunks[index].chunk = chunk;
             client->chunks[index].used = 1;
 
-            return;
-        } else if (client->chunks[index].used &&
-                  client->chunks[index].position.x == chunk->position.x &&
-                  client->chunks[index].position.y == chunk->position.y &&
-                  client->chunks[index].position.z == chunk->position.z)
-        {
-            chunkClean(client->chunks[index].chunk);
-            client->chunks[index].chunk = chunk;
             return;
         }
 
@@ -96,7 +86,7 @@ void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
 
 CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return NULL;
-    if (worldGetChunk(client, x, y, z) != NULL) return NULL;
+    if (worldGetChunk(client, x, y, z)) return NULL;
 
     CHUNK* c = NULL;
     U8* data = dbGetChunkBlocks(x, y, z);
@@ -128,9 +118,6 @@ void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
             client->chunks[index].position.y = 0;
             client->chunks[index].position.z = 0;
             client->chunks[index].used = 0;
-            chunkClean(client->chunks[index].chunk);
-            client->chunks[index].chunk = NULL;
-
             return;
         }
 
@@ -181,13 +168,18 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
         CHUNK* c = worldLoadChunk(client, x, y, z);
-        if (c == NULL || chunkIsEmpty(c) || y < -32) continue;
+        if (c == NULL || chunkIsEmpty(c) || y < -32) {
+            chunkClean(c);
+            continue;
+        }
 
         if (chunkIsMonotype(c)) {
             clientSendMonotypeChunk(client, c);
+            chunkClean(c);
             continue;
         }
         clientSendChunk(client, c);
+        chunkClean(c);
     }}}
 }
 

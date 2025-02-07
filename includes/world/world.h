@@ -6,7 +6,7 @@
 #include "network/server.h"
 
 void worldRehashChunks(TCP_CLIENT* client);
-CHUNK* worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
+U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
 void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk);
 CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
 void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z);
