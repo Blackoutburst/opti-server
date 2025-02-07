@@ -10,7 +10,7 @@ static I8* errMsg = NULL;
 
 U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
+    const I8* sql = "SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
      if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
         println("SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?; fucked up");
         return NULL;
@@ -38,10 +38,10 @@ U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
 
 void dbAddChunk(CHUNK* chunk) {
     sqlite3_stmt *stmt;
-    const char *sql = "INSERT INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?);";
+    const I8* sql = "INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?);";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        println("INSERT INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?); fucked up");
+        println("INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?); fucked up");
         return;
     }
 
@@ -51,7 +51,7 @@ void dbAddChunk(CHUNK* chunk) {
 
     I8 blocksStr[CHUNK_BLOCK_COUNT] = {0};
     if (chunk->monotype) {
-        for (int i = 0; i < CHUNK_BLOCK_COUNT; i++) blocksStr[i] = chunk->blocks[0];
+        for (I32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocksStr[i] = chunk->blocks[0];
     } else {
         memcpy(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
     }
@@ -66,7 +66,7 @@ void dbAddChunk(CHUNK* chunk) {
 }
 
 void _dbCreateWorldTable(void) {
-    const char *sql = "CREATE TABLE IF NOT EXISTS world ("
+    const I8* sql = "CREATE TABLE IF NOT EXISTS world ("
                   "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                   "seed INTEGER);";
     rc = sqlite3_exec(db, sql, NULL, 0, &errMsg);
@@ -78,12 +78,14 @@ void _dbCreateWorldTable(void) {
 }
 
 void _dbCreateChunkTable(void) {
-    const char *sql = "CREATE TABLE IF NOT EXISTS chunks ("
+    const I8* sql = "CREATE TABLE IF NOT EXISTS chunks ("
                   "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                   "x INTEGER, "
                   "y INTEGER, "
                   "z INTEGER, "
-                  "blocks TEXT);";
+                  "blocks TEXT, "
+                  "UNIQUE(x, y, z) ON CONFLICT REPLACE"
+                  ");";
     rc = sqlite3_exec(db, sql, NULL, 0, &errMsg);
 
     if (rc != SQLITE_OK) {
