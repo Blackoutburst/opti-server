@@ -113,6 +113,8 @@ void dbInit(void) {
         println("Couldn't open [sqlite.db]");
         exit(1);
     }
+    sqlite3_exec(db, "PRAGMA journal_mode = MEMORY;", NULL, NULL, &errMsg);
+    sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, &errMsg);
 
     println("Connected to local database [sqlite.db]");
     
