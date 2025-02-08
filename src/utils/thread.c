@@ -22,7 +22,7 @@
 
         if (pthread_create(&thread, NULL, method, arg)) {
             println("Thread creation failed");
-            return NULL;
+            return 0;
         }
 
         return thread;

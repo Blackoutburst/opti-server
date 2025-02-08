@@ -18,5 +18,7 @@ I32 main(I32 argc, I8** argv) {
     dbInit();
     serverInit();
     serverClean();
+
+    printf("Shutting down server\n");
     return 0;
 }

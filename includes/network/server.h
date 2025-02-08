@@ -62,10 +62,13 @@ struct tcpClient {
     void serverInitPOSIX(void);
 #endif
 
+void _serverSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity);
+void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId);
 U32 getClientId(void);
 TCP_CLIENT** getAllClients(void);
 void removeClient(U32 id);
 void serverBroadcast(U8* buffer, U32 size);
+void _serverWrite(TCP_CLIENT* client, U8* buffer, U32 size);
 void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size);
 void serverAccept(void);
 void serverListen(void);
