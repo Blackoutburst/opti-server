@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "main.h"
 #include "utils/buffer.h"
 #include "utils/string.h"
 #include "utils/math.h"
@@ -22,6 +23,7 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     client->pitch = packet->pitch;
     
     free(packet);
+    free(buffer);
 
     TCP_CLIENT** clients = getAllClients();
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
@@ -96,14 +98,26 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
 
 void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
     // TODO: flem
+    free(buffer);
 }
 
 void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     serverBroadcast(buffer, sizeof(CLIENT_PACKET_CHAT));
+    free(buffer);
 }
 
 void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
+    S04CLIENT_METADATA* packet = decodePacketClientMetadata(buffer);
+
+    U8 mRd = getServerMaxRenderDistance();
+    U8 newRenderDistance = packet->renderDistance > mRd ? mRd : packet->renderDistance;
+    
+    client->renderDistance = newRenderDistance;
+    memcpy(client->name, packet->name, 64);
+    
     serverBroadcast(buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    free(buffer);
+    free(packet);
 }
 
 void clientSendIdentification(TCP_CLIENT* client) {
