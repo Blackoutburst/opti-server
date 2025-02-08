@@ -16,7 +16,7 @@
     #include <pthread.h>
 #endif
 
-#define TCP_PORT 15000
+#define TCP_PORT 20000
 #define TCP_LISTENT_QUEUE_SIZE 8
 #define MAX_TCP_CLIENT 16
 #define BUFFER_SIZE 5000
