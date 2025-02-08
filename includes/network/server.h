@@ -63,6 +63,7 @@ struct tcpClient {
 #endif
 
 U32 getClientId(void);
+TCP_CLIENT** getAllClients(void);
 void removeClient(U32 id);
 void serverBroadcast(U8* buffer, U32 size);
 void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size);

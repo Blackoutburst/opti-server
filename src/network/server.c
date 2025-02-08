@@ -7,6 +7,7 @@
 #include "utils/mutex.h"
 #include "utils/thread.h"
 #include "network/server.h"
+#include "network/encoder.h"
 #include "network/packet.h"
 
 static U8 running = 0;
@@ -51,6 +52,24 @@ U32 getClientId(void) {
 
         memcpy(client->name, name, 64);
         free(name);
+
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] != NULL) continue;
+            C01ADD_ENTITY packet;
+            packet.id = CLIENT_PACKET_ADD_ENTITY;
+            packet.entityId = tcpClients[i]->id;
+            packet.x = tcpClients[i]->position.x;
+            packet.y = tcpClients[i]->position.y;
+            packet.z = tcpClients[i]->position.z;
+            packet.yaw = tcpClients[i]->yaw;
+            packet.pitch = tcpClients[i]->pitch;
+            memcpy(packet.name, tcpClients[i]->name, 64);
+
+            U8* buffer = encodePacketAddEntity(&packet);
+            serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+
+            free(buffer);
+        }
 
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] != NULL) continue;
@@ -105,6 +124,24 @@ U32 getClientId(void) {
 
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] != NULL) continue;
+            C01ADD_ENTITY packet;
+            packet.id = CLIENT_PACKET_ADD_ENTITY;
+            packet.entityId = tcpClients[i]->id;
+            packet.x = tcpClients[i]->position.x;
+            packet.y = tcpClients[i]->position.y;
+            packet.z = tcpClients[i]->position.z;
+            packet.yaw = tcpClients[i]->yaw;
+            packet.pitch = tcpClients[i]->pitch;
+            memcpy(packet.name, tcpClients[i]->name, 64);
+
+            U8* buffer = encodePacketAddEntity(&packet);
+            serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+
+            free(buffer);
+        }
+
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] != NULL) continue;
             tcpClients[i] = client;
             break;
         }
@@ -132,12 +169,18 @@ U32 getClientId(void) {
     }
 #endif
 
+TCP_CLIENT** getAllClients(void) {
+    return tcpClients;
+}
+
 void removeClient(U32 id) {
     mutexLock(&mutex);
 
+    U32 removedId = 0;
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
         if (tcpClients[i] == NULL) continue;
         if (tcpClients[i]->id == id) {
+            removedId = id;
             #if defined(_WIN32) || defined(_WIN64)
                 closesocket(tcpClients[i]->socket);
                 tcpClients[i]->socket = INVALID_SOCKET;
@@ -151,6 +194,15 @@ void removeClient(U32 id) {
             break;
         }
     }
+
+    C02REMOVE_ENTITY packet;
+    packet.id = CLIENT_PACKET_REMOVE_ENTITY;
+    packet.entityId = removedId;
+
+    U8* buffer = encodePacketRemoveEntity(&packet);
+    serverBroadcast(buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY)); 
+
+    free(buffer);
 
     mutexUnlock(&mutex);
 }
@@ -320,6 +372,24 @@ void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
 #endif
 
 void serverAccept(void) {
+    C01ADD_ENTITY packet;
+    packet.id = CLIENT_PACKET_ADD_ENTITY;
+    packet.entityId = clientId;
+    packet.x = 0;
+    packet.y = 0;
+    packet.z = 0;
+    packet.yaw = 0;
+    packet.pitch = 0;
+
+    U8* encodedString = encodeString("Guest", 64);
+    memcpy(packet.name, encodedString, 64);
+
+    U8* buffer = encodePacketAddEntity(&packet);
+    serverBroadcast(buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+
+    free(encodedString);
+    free(buffer);
+    
     #if defined(_WIN32) || defined(_WIN64)
         serverAcceptWIN();
     #else

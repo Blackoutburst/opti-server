@@ -34,11 +34,26 @@ S02BLOCK_BULK_EDIT* decodePacketBlockBulkEdit(U8* buffer) {
 }
 
 S03CHAT* decodePacketChat(U8* buffer) {
-    // TODO
-    return NULL;
+    U8** bufferPtr = &buffer;
+    
+    S03CHAT* packet = malloc(sizeof(S03CHAT));
+    U8 msg[4096];
+    for (I32 i = 0; i < 4096; i++) msg[i] = getU8(bufferPtr);
+    
+    memcpy(packet->message, msg, 4096);
+    
+    return packet;
 }
 
 S04CLIENT_METADATA* decodePacketClientMetadata(U8* buffer) {
-    // TODO
-    return NULL;
+    U8** bufferPtr = &buffer;
+    
+    S04CLIENT_METADATA* packet = malloc(sizeof(S04CLIENT_METADATA));
+    packet->renderDistance = getU8(bufferPtr);
+    U8 n[64];
+    for (I32 i = 0; i < 64; i++) n[i] = getU8(bufferPtr);
+    
+    memcpy(packet->name, n, 64);
+    
+    return packet;
 }

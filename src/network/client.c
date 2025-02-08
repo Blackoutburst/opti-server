@@ -22,6 +22,13 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     client->pitch = packet->pitch;
     
     free(packet);
+
+    TCP_CLIENT** clients = getAllClients();
+    for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+        if (clients[i] == NULL) continue;
+        if (clients[i]->id == client->id) continue;
+        serverWrite(clients[i], buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY));
+    }
     
     worldUpdateClientChunk(client);
 }
@@ -85,6 +92,18 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     
     dbAddChunk(chunk);
     chunkClean(chunk);
+}
+
+void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
+    // TODO: flem
+}
+
+void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
+    serverBroadcast(buffer, sizeof(CLIENT_PACKET_CHAT));
+}
+
+void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
+    serverBroadcast(buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
 }
 
 void clientSendIdentification(TCP_CLIENT* client) {
