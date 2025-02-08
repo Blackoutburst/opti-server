@@ -70,11 +70,15 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
         client->position.x = 0;
         client->position.y = 0;
         client->position.z = 0;
+        client->chunkPosition.x = 64;
+        client->chunkPosition.y = 64;
+        client->chunkPosition.z = 64;
         client->yaw = 0;
         client->pitch = 0;
         client->renderDistance = 2;
 
         init(&client->chunks);
+        init(&client->dbChunks);
         
         memcpy(client->name, name, 64);
         free(name);
@@ -125,11 +129,15 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
         client->position.x = 0;
         client->position.y = 0;
         client->position.z = 0;
+        client->chunkPosition.x = 64;
+        client->chunkPosition.y = 64;
+        client->chunkPosition.z = 64;
         client->yaw = 0;
         client->pitch = 0;
         client->renderDistance = 2;
         
         init(&client->chunks);
+        init(&client->dbChunks);
         
         memcpy(client->name, name, 64);
         free(name);
@@ -195,6 +203,7 @@ void removeClient(U32 id) {
                 tcpClients[i]->socket = -1;
             #endif
             cleanup(&tcpClients[i]->chunks);
+            cleanup(&tcpClients[i]->dbChunks);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
             break;

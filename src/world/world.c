@@ -19,24 +19,6 @@ void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     insert(&client->chunks, chunkHash(chunk->position.x, chunk->position.y, chunk->position.z), elem);
 }
 
-CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
-    if (client == NULL) return NULL;
-    if (worldGetChunk(client, x, y, z)) return NULL;
-
-    CHUNK* c = NULL;
-    U8* data = dbGetChunkBlocks(x, y, z);
-    if (data == NULL) {
-        c = chunkCreate(x, y, z);
-        dbAddChunk(c);
-    } else {
-        c = chunkAssemble(x, y, z, data);
-    }
-    
-    worldAddChunk(client, c);
-
-    return c;
-}
-
 void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return;
 
@@ -78,14 +60,48 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 px = TO_CHUNK_POS((I32)client->position.x);
     I32 py = TO_CHUNK_POS((I32)client->position.y);
     I32 pz = TO_CHUNK_POS((I32)client->position.z);
-    
     I32 rd = client->renderDistance * CHUNK_SIZE;
+
+    I32 minX = px - rd;
+    I32 maxX = px + rd;
+    I32 minY = py - rd;
+    I32 maxY = py + rd;
+    I32 minZ = pz - rd;
+    I32 maxZ = pz + rd;
+
+    CHUNK* chunksToAdd = malloc(sizeof(CHUNK) * CUBE(2 * rd));
+    U32 addIndex = 0;
+
+    dbGetChunksInRegion(client, minX, maxX, minY, maxY, minZ, maxZ);
 
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
-        CHUNK* c = worldLoadChunk(client, x, y, z);
-        if (c == NULL || chunkIsEmpty(c) || y < -32) {
+        if (y < -32) continue;
+        if (worldGetChunk(client, x, y, z)) continue;
+
+        U8** data = get(&client->dbChunks, chunkHash(x, y, z));
+        
+        CHUNK* c = NULL;
+        if (data == NULL) {
+            c = chunkCreate(x, y, z);
+            chunksToAdd[addIndex].position = c->position;
+            chunksToAdd[addIndex].monotype = c->monotype;
+            if (c->monotype) {
+                chunksToAdd[addIndex].blocks = malloc(sizeof(U8));
+                chunksToAdd[addIndex].blocks[0] = c->blocks[0];
+            } else {
+                chunksToAdd[addIndex].blocks = malloc(CHUNK_BLOCK_COUNT);
+                memcpy(chunksToAdd[addIndex].blocks, c->blocks, CHUNK_BLOCK_COUNT);
+            }
+            addIndex++;
+        } else {
+            c = chunkAssemble(x, y, z, *data);
+        }
+
+        worldAddChunk(client, c);
+
+        if (chunkIsEmpty(c)) {
             chunkClean(c);
             continue;
         }
@@ -98,5 +114,12 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         clientSendChunk(client, c);
         chunkClean(c);
     }}}
+
+    clear(&client->dbChunks);
+
+    if (addIndex > 0)
+        dbAddChunks(chunksToAdd, addIndex);
+    
+    free(chunksToAdd);
 }
 

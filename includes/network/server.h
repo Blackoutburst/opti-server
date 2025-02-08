@@ -34,9 +34,11 @@ struct tcpClient {
         pthread_t thread;
     #endif
     VECTORF position;
+    VECTORF chunkPosition;
     F32 yaw;
     F32 pitch;
     map(U32, VECTORI) chunks;
+    map(U32, U8*) dbChunks;
     U8 renderDistance;
     U8 name[64];
 };

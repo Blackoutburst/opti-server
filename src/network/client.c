@@ -32,7 +32,16 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
         clientSendUpdateEntity(clients[i], client);
     }
     
-    worldUpdateClientChunk(client);
+    I32 px = TO_CHUNK_POS((I32)client->position.x);
+    I32 py = TO_CHUNK_POS((I32)client->position.y);
+    I32 pz = TO_CHUNK_POS((I32)client->position.z);
+
+    if (px != client->chunkPosition.x || py != client->chunkPosition.y || pz != client->chunkPosition.z)
+        worldUpdateClientChunk(client);
+
+    client->chunkPosition.x = px;
+    client->chunkPosition.y = py;
+    client->chunkPosition.z = pz;
 }
 
 void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
