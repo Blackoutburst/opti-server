@@ -8,11 +8,11 @@ void (*getServerPacketFunction(I8 packetId))(TCP_CLIENT*, U8*) {
         case SERVER_PACKET_UPDATE_BLOCK:
             return &clientReceiveUpdateBlock;
         case SERVER_PACKET_BLOCK_BULK_EDIT:
-            return NULL;
+            return &clientReceiveBlockBulkEdit;
         case SERVER_PACKET_CHAT:
-            return NULL;
+            return &clientReceiveChat;
         case SERVER_PACKET_CLIENT_METADATA:
-            return NULL;
+            return &clientReceiveClientMetadata;
         default: return NULL;
     }
 }

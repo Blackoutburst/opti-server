@@ -3,6 +3,7 @@
 #include "utils/types.h"
 #include "utils/vector.h"
 #include "utils/math.h"
+#include "cc/cc.h"
 
 #define CHUNK_SIZE 16
 #define CHUNK_BLOCK_COUNT CUBE(CHUNK_SIZE)
@@ -14,14 +15,6 @@ struct chunk {
     U8 monotype;
     VECTORI position;
     U8* blocks;
-};
-
-
-typedef struct chunkHashmap CHUNK_HASHMAP;
-
-struct chunkHashmap {
-    VECTORI position;
-    U8 used;
 };
 
 U8* chunkGenerate(I32 x, I32 y, I32 z);

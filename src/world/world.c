@@ -6,82 +6,17 @@
 #include "utils/math.h"
 #include "database/database.h"
 
-void worldRehashChunks(TCP_CLIENT* client) {
-    if (client == NULL) return;
-
-    CHUNK_HASHMAP* newChunks = malloc(sizeof(CHUNK_HASHMAP) * CUBE(client->renderDistance * 2));
-
-    for (U32 i = 0; i < CUBE(client->renderDistance * 2); i++) {
-        newChunks[i].used = 0;
-        newChunks[i].position.x = 0;
-        newChunks[i].position.y = 0;
-        newChunks[i].position.z = 0;
-    }
-
-    for (U32 i = 0; i < CUBE(client->renderDistance * 2); i++) {
-        if (!client->chunks[i].used) continue;
-
-        I32 x = client->chunks[i].position.x;
-        I32 y = client->chunks[i].position.y;
-        I32 z = client->chunks[i].position.z;
-
-        U32 index = chunkHash(x, y, z) % CUBE(client->renderDistance * 2);
-
-        while (newChunks[index].used) {
-            index = (index + 1) % CUBE(client->renderDistance * 2);
-        }
-
-        newChunks[index] = client->chunks[i];
-    }
-
-    free(client->chunks);
-    client->chunks = newChunks;
-}
-
-
 U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return 0;
 
-    U32 index = chunkHash(x, y, z) % CUBE(client->renderDistance * 2);
-    U32 start = index;
-
-    while (1) {
-        if (!client->chunks[index].used) {
-            return 0;
-        }
-
-        if (client->chunks[index].position.x == x && client->chunks[index].position.y == y && client->chunks[index].position.z == z) {
-            return 1;
-        }
-
-        index = (index + 1) % CUBE(client->renderDistance * 2);
-
-        if (index == start) {
-            return 0;
-        }
-    }
+    return (get(&client->chunks, chunkHash(x, y, z)) != NULL);
 }
 
 void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     if (client == NULL) return;
 
-    U32 index = chunkHash(chunk->position.x, chunk->position.y, chunk->position.z) % CUBE(client->renderDistance * 2);
-    U32 start = index;
-
-    while (1) {
-        if (!client->chunks[index].used) {
-            client->chunks[index].position = chunk->position;
-            client->chunks[index].used = 1;
-
-            return;
-        }
-
-        index = (index + 1) % CUBE(client->renderDistance * 2);
-
-        if (index == start) {
-            return;
-        }
-    }
+    VECTORI elem = { chunk->position.x, chunk->position.y, chunk->position.z };
+    insert(&client->chunks, chunkHash(chunk->position.x, chunk->position.y, chunk->position.z), elem);
 }
 
 CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
@@ -105,28 +40,7 @@ CHUNK* worldLoadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
 void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return;
 
-    U32 index = chunkHash(x, y, z) % CUBE(client->renderDistance * 2);
-    U32 start = index;
-
-    while (1) {
-        if (client->chunks[index].used &&
-            client->chunks[index].position.x == x &&
-            client->chunks[index].position.y == y &&
-            client->chunks[index].position.z == z)
-        {
-            client->chunks[index].position.x = 0;
-            client->chunks[index].position.y = 0;
-            client->chunks[index].position.z = 0;
-            client->chunks[index].used = 0;
-            return;
-        }
-
-        index = (index + 1) % CUBE(client->renderDistance * 2);
-
-        if (index == start) {
-            return;
-        }
-    }
+    erase(&client->chunks, chunkHash(x, y, z));
 }
 
 void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client) {
@@ -137,26 +51,29 @@ void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client) {
     I32 pz = TO_CHUNK_POS((I32)client->position.z);
     I32 rd = client->renderDistance * CHUNK_SIZE;
 
-    for (U32 i = 0; i < CUBE(client->renderDistance * 2); i++) {
-        if (!client->chunks[i].used) continue;
+    size_t count = size(&client->chunks);
+    U32* keysToRemove = malloc(sizeof(U32) * count);
+    size_t removeCount = 0;
 
-        if (client->chunks[i].position.x < px - rd ||
-            client->chunks[i].position.x >= px + rd ||
-            client->chunks[i].position.y < py - rd ||
-            client->chunks[i].position.y >= py + rd ||
-            client->chunks[i].position.z < pz - rd ||
-            client->chunks[i].position.z >= pz + rd)
-        {
-            worldUnloadChunk(client, client->chunks[i].position.x, client->chunks[i].position.y, client->chunks[i].position.z);
-        }
+    for_each(&client->chunks, key, value) {
+         if ( value->x < px - rd || value->x >= px + rd ||
+              value->y < py - rd || value->y >= py + rd ||
+              value->z < pz - rd || value->z >= pz + rd )
+         {
+             keysToRemove[removeCount++] = *key;
+         }
     }
+
+    for (size_t i = 0; i < removeCount; i++) {
+         erase(&client->chunks, keysToRemove[i]);
+    }
+    free(keysToRemove);
 }
 
 void worldUpdateClientChunk(TCP_CLIENT* client) {
     if (client == NULL) return;
 
     worldRemoveChunkOutOfRenderDistance(client);
-    worldRehashChunks(client);
 
     I32 px = TO_CHUNK_POS((I32)client->position.x);
     I32 py = TO_CHUNK_POS((I32)client->position.y);

@@ -3,6 +3,7 @@
 #include "utils/types.h"
 #include "utils/vector.h"
 #include "world/chunk.h"
+#include "cc/cc.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <winsock2.h>
@@ -35,7 +36,7 @@ struct tcpClient {
     VECTORF position;
     F32 yaw;
     F32 pitch;
-    CHUNK_HASHMAP* chunks;
+    map(U32, VECTORI) chunks;
     U8 renderDistance;
     U8 name[64];
 };

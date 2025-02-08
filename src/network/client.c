@@ -114,6 +114,8 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     
     client->renderDistance = newRenderDistance;
     memcpy(client->name, packet->name, 64);
+
+    printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
     
     serverBroadcast(buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(buffer);
