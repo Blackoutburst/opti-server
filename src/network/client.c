@@ -27,7 +27,7 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
         if (clients[i] == NULL) continue;
         if (clients[i]->id == client->id) continue;
-        serverWrite(clients[i], buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY));
+        clientSendUpdateEntity(clients[i], client);
     }
     
     worldUpdateClientChunk(client);
