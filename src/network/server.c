@@ -235,8 +235,23 @@ void removeClient(U32 id) {
                 return 0;
             }
 
-            U8* dataBuffer = malloc(size);
-            U32 totalBytesRead = 0;
+            U8* dataBuffer;
+            U32 totalBytesRead;
+            if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
+                U32 blockCount = 0;
+                if (recv(client->socket, &blockCount, sizeof(U32), 0) <= 0) {
+                    println("Data read failed");
+                    removeClient(client->id);
+                    return 0;
+                }
+
+                size = sizeof(U32) + blockCount * sizeof(BLOCK_BULK_EDIT);
+                totalBytesRead = sizeof(U32);
+            } else {
+                totalBytesRead = 0;
+            }
+
+            dataBuffer = malloc(size);
             while (totalBytesRead < size) {
                 I32 bytesRead = recv(client->socket, (I8*)(dataBuffer + totalBytesRead), size - totalBytesRead, 0);
                 totalBytesRead += bytesRead;
@@ -275,8 +290,23 @@ void removeClient(U32 id) {
                 return NULL;
             }
 
-            U8* dataBuffer = malloc(size);
-            U32 totalBytesRead = 0;
+            U8* dataBuffer;
+            U32 totalBytesRead;
+            if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
+                U32 blockCount = 0;
+                if (recv(client->socket, &blockCount, sizeof(U32), 0) <= 0) {
+                    println("Data read failed");
+                    removeClient(client->id);
+                    return 0;
+                }
+
+                size = sizeof(U32) + blockCount * sizeof(BLOCK_BULK_EDIT);
+                totalBytesRead = sizeof(U32);
+            } else {
+                totalBytesRead = 0;
+            }
+
+            dataBuffer = malloc(size);
             while (totalBytesRead < size) {
                 I32 bytesRead = recv(client->socket, dataBuffer + totalBytesRead, size - totalBytesRead, 0);
                 totalBytesRead += bytesRead;

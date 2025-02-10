@@ -15,13 +15,13 @@
 
 void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     S00UPDATE_ENTITY* packet = decodePacketUpdateEntity(buffer);
-    
+
     client->position.x = packet->x;
     client->position.y = packet->y;
     client->position.z = packet->z;
     client->yaw = packet->yaw;
     client->pitch = packet->pitch;
-    
+
     free(packet);
     free(buffer);
 
@@ -31,7 +31,7 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
         if (clients[i]->id == client->id) continue;
         clientSendUpdateEntity(clients[i], client);
     }
-    
+
     I32 px = TO_CHUNK_POS((I32)client->position.x);
     I32 py = TO_CHUNK_POS((I32)client->position.y);
     I32 pz = TO_CHUNK_POS((I32)client->position.z);
@@ -49,10 +49,11 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     U8 type = packet->type;
     I32 x = packet->x;
     I32 y = packet->y;
-    I32 z = packet->z; 
+    I32 z = packet->z;
 
     free(packet);
-    
+    free(buffer);
+
     CHUNK* chunk = NULL;
     I32 cx = TO_CHUNK_POS(x);
     I32 cy = TO_CHUNK_POS(y);
@@ -63,7 +64,7 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     } else {
         chunk = chunkAssemble(cx, cy, cz, data);
     }
-    
+
     if (chunk->monotype) {
         U8 t = chunk->blocks[0];
         free(chunk->blocks);
@@ -85,9 +86,21 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
         p.z = chunk->position.z;
         p.type = chunk->blocks[0];
 
-        U8* buffer = encodePacketSendMonotypeChunk(&p);
-        serverBroadcast(buffer, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
-        free(buffer);
+        U8* tempBuff = encodePacketSendMonotypeChunk(&p);
+
+        TCP_CLIENT** tcpClients = getAllClients();
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            if (p.x < tcpClients[i]->chunkPosition.x - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.x > tcpClients[i]->chunkPosition.x + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.y < tcpClients[i]->chunkPosition.y - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.y > tcpClients[i]->chunkPosition.y + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
+            ) continue;
+            serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
+        }
+        free(tempBuff);
     } else {
         C04SEND_CHUNK p;
         p.id = CLIENT_PACKET_SEND_CHUNK;
@@ -96,18 +109,115 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
         p.z = chunk->position.z;
         for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) p.blocks[i] = chunk->blocks[i];
 
-        U8* buffer = encodePacketSendChunk(&p);
-        serverBroadcast(buffer, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
-        free(buffer);
+        U8* tempBuff = encodePacketSendChunk(&p);
+
+        TCP_CLIENT** tcpClients = getAllClients();
+        for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+            if (tcpClients[i] == NULL) continue;
+            if (p.x < tcpClients[i]->chunkPosition.x - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.x > tcpClients[i]->chunkPosition.x + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.y < tcpClients[i]->chunkPosition.y - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.y > tcpClients[i]->chunkPosition.y + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
+            ) continue;
+            serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+        }
+        free(tempBuff);
     }
-    
+
     dbAddChunk(chunk);
     chunkClean(chunk);
 }
 
 void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
-    // TODO: flem
+    S02BLOCK_BULK_EDIT* packet = decodePacketBlockBulkEdit(buffer);
+    U32 blockCount = packet->blockCount;
+    BLOCK_BULK_EDIT* blocks = packet->blocks;
+    free(packet);
     free(buffer);
+
+    for (U32 i = 0; i < blockCount; i++) {
+        U8 type = blocks[i].type;
+        I32 x = blocks[i].x;
+        I32 y = blocks[i].y;
+        I32 z = blocks[i].z;
+
+        CHUNK* chunk = NULL;
+        I32 cx = TO_CHUNK_POS(x);
+        I32 cy = TO_CHUNK_POS(y);
+        I32 cz = TO_CHUNK_POS(z);
+        U8* data = dbGetChunkBlocks(cx, cy, cz);
+        if (data == NULL) {
+            chunk = chunkCreate(cx, cy, cz);
+        } else {
+            chunk = chunkAssemble(cx, cy, cz, data);
+        }
+
+        if (chunk->monotype) {
+            U8 t = chunk->blocks[0];
+            free(chunk->blocks);
+            chunk->blocks = malloc(CHUNK_BLOCK_COUNT);
+            for (I32 i = 0; i < CHUNK_BLOCK_COUNT; i++) chunk->blocks[i] = t;
+            chunk->monotype = 0;
+        }
+
+        U32 index = xyzToIndex(x - cx, y - cy, z - cz);
+        chunk->blocks[index] = type;
+
+        chunk->monotype = chunkIsMonotype(chunk);
+
+        if (chunk->monotype) {
+            C05SEND_MONOTYPE_CHUNK p;
+            p.id = CLIENT_PACKET_SEND_MONOTYPE_CHUNK;
+            p.x = chunk->position.x;
+            p.y = chunk->position.y;
+            p.z = chunk->position.z;
+            p.type = chunk->blocks[0];
+
+            U8* tempBuff = encodePacketSendMonotypeChunk(&p);
+
+            TCP_CLIENT** tcpClients = getAllClients();
+            for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+                if (tcpClients[i] == NULL) continue;
+                if (p.x < tcpClients[i]->chunkPosition.x - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.x > tcpClients[i]->chunkPosition.x + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.y < tcpClients[i]->chunkPosition.y - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.y > tcpClients[i]->chunkPosition.y + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
+                ) continue;
+                serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
+            }
+            free(tempBuff);
+        } else {
+            C04SEND_CHUNK p;
+            p.id = CLIENT_PACKET_SEND_CHUNK;
+            p.x = chunk->position.x;
+            p.y = chunk->position.y;
+            p.z = chunk->position.z;
+            for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) p.blocks[i] = chunk->blocks[i];
+
+            U8* tempBuff = encodePacketSendChunk(&p);
+
+            TCP_CLIENT** tcpClients = getAllClients();
+            for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
+                if (tcpClients[i] == NULL) continue;
+                if (p.x < tcpClients[i]->chunkPosition.x - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.x > tcpClients[i]->chunkPosition.x + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.y < tcpClients[i]->chunkPosition.y - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.y > tcpClients[i]->chunkPosition.y + tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
+                    p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
+                ) continue;
+                serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+            }
+            free(tempBuff);
+        }
+
+        dbAddChunk(chunk);
+        chunkClean(chunk);
+    }
 }
 
 void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
@@ -120,12 +230,12 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
 
     U8 mRd = getServerMaxRenderDistance();
     U8 newRenderDistance = packet->renderDistance > mRd ? mRd : packet->renderDistance;
-    
+
     client->renderDistance = newRenderDistance;
     memcpy(client->name, packet->name, 64);
 
     printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
-    
+
     serverBroadcast(buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(buffer);
     free(packet);
@@ -137,7 +247,7 @@ void clientSendIdentification(TCP_CLIENT* client) {
     packet.entityId = getClientId();
 
     U8* buffer = encodePacketIdentification(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_IDENTIFICATION)); 
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_IDENTIFICATION));
 
     free(buffer);
 }
@@ -154,7 +264,7 @@ void clientSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     memcpy(packet.name, entity->name, 64);
 
     U8* buffer = encodePacketAddEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY));
 
     free(buffer);
 }
@@ -165,7 +275,7 @@ void clientSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
     packet.entityId = entityId;
 
     U8* buffer = encodePacketRemoveEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY)); 
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY));
 
     free(buffer);
 }
@@ -181,7 +291,7 @@ void clientSendUpdateEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     packet.pitch = entity->pitch;
 
     U8* buffer = encodePacketUpdateEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY)); 
+    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY));
 
     free(buffer);
 }

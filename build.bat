@@ -1,1 +1,1 @@
-clang src/*.c src/utils/*.c src/database/*.c src/sqlite/*.c src/network/*.c src/world/*.c -Iincludes -Llib -o server -lws2_32 -W -Wall -Wextra -Wpedantic -g3 -fno-omit-frame-pointer -fsanitize=address -fsanitize-address-use-after-return=always
+clang src/*.c src/utils/*.c src/database/*.c src/sqlite/*.c src/network/*.c src/world/*.c -Iincludes -Llib -o server -lws2_32 -W -Wall -Wextra -Wpedantic -Wno-unused-parameter -g3 -fno-omit-frame-pointer -fsanitize=address -fsanitize-address-use-after-return=always
