@@ -257,7 +257,7 @@ void removeClient(U32 id) {
             U32 bufferOffset = 0;
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
-                if (!recvAll(client, &blockCountBE, sizeof(U32), 0)) return 0;
+                if (!recvAll(client, (U8*)(&blockCountBE), sizeof(U32), 0)) return 0;
                 
                 U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
@@ -305,7 +305,7 @@ void removeClient(U32 id) {
             U32 bufferOffset = 0;
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
-                if (!recvAll(client, &blockCountBE, sizeof(U32), 0)) return NULL;
+                if (!recvAll(client, (U8*)(&blockCountBE), sizeof(U32), 0)) return NULL;
                 
                 U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
