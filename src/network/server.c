@@ -30,6 +30,24 @@ U32 getClientId(void) {
     return clientId;
 }
 
+U8 recvAll(TCP_CLIENT* client, U8* buffer, U32 size, U32 bufferOffset) {
+    U32 totalBytesRead = 0;
+
+    while (totalBytesRead < size) {
+        I32 bytesRead = recv(client->socket, buffer + totalBytesRead + bufferOffset, size - totalBytesRead, 0);
+        totalBytesRead += bytesRead;
+
+        if (bytesRead <= 0) {
+            println("Data read failed");
+            removeClient(client->id);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
 /// CLIENTS ///
 void _serverSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     C01ADD_ENTITY packet;
@@ -236,17 +254,12 @@ void removeClient(U32 id) {
             }
 
             U8* dataBuffer;
-            U32 totalBytesRead = 0;
             U32 bufferOffset = 0;
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
-                if (recv(client->socket, &blockCountBE, sizeof(U32), 0) <= 0) {
-                    println("Data read failed");
-                    removeClient(client->id);
-                    return 0;
-                }
-                U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 16) & 0xFF) | ((blockCountBE >> 8) & 0xFF) | ((blockCountBE) & 0xFF);
-
+                if (!recvAll(client, &blockCountBE, sizeof(U32), 0)) return 0;
+                
+                U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
                 bufferOffset = 4;
@@ -259,16 +272,7 @@ void removeClient(U32 id) {
                 dataBuffer = malloc(size);
             }
 
-            while (totalBytesRead < size) {
-                I32 bytesRead = recv(client->socket, dataBuffer + totalBytesRead + bufferOffset, size - totalBytesRead, 0);
-                totalBytesRead += bytesRead;
-
-                if (bytesRead <= 0) {
-                    println("Data read failed");
-                    removeClient(client->id);
-                    return NULL;
-                }
-            }
+            if (!recvAll(client, dataBuffer, size, bufferOffset)) return 0;
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
             if (f != NULL)
@@ -298,18 +302,12 @@ void removeClient(U32 id) {
             }
 
             U8* dataBuffer;
-            U32 totalBytesRead = 0;
             U32 bufferOffset = 0;
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
-                if (recv(client->socket, &blockCountBE, sizeof(U32), 0) <= 0) {
-                    println("Data read failed");
-                    removeClient(client->id);
-                    return 0;
-                }
+                if (!recvAll(client, &blockCountBE, sizeof(U32), 0)) return NULL;
+                
                 U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
-                          
-                printf("%i\n", blockCountLE);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
                 bufferOffset = 4;
@@ -322,16 +320,7 @@ void removeClient(U32 id) {
                 dataBuffer = malloc(size);
             }
 
-            while (totalBytesRead < size) {
-                I32 bytesRead = recv(client->socket, dataBuffer + totalBytesRead + bufferOffset, size - totalBytesRead, 0);
-                totalBytesRead += bytesRead;
-
-                if (bytesRead <= 0) {
-                    println("Data read failed");
-                    removeClient(client->id);
-                    return NULL;
-                }
-            }
+            if (!recvAll(client, dataBuffer, size, bufferOffset)) return NULL;
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
             if (f != NULL)
