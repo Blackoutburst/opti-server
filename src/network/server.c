@@ -247,6 +247,10 @@ void removeClient(U32 id) {
 
                 size = sizeof(U32) + blockCount * sizeof(BLOCK_BULK_EDIT);
                 totalBytesRead = sizeof(U32);
+                dataBuffer[0] = (value)       & 0xFF;
+                dataBuffer[1] = (value >> 8 ) & 0xFF;
+                dataBuffer[2] = (value >> 16) & 0xFF;
+                dataBuffer[3] = (value >> 24) & 0xFF;
             } else {
                 totalBytesRead = 0;
             }
@@ -302,6 +306,10 @@ void removeClient(U32 id) {
 
                 size = sizeof(U32) + blockCount * sizeof(BLOCK_BULK_EDIT);
                 totalBytesRead = sizeof(U32);
+                dataBuffer[0] = (value)       & 0xFF;
+                dataBuffer[1] = (value >> 8 ) & 0xFF;
+                dataBuffer[2] = (value >> 16) & 0xFF;
+                dataBuffer[3] = (value >> 24) & 0xFF;
             } else {
                 totalBytesRead = 0;
             }
