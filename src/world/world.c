@@ -69,7 +69,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 minZ = pz - rd;
     I32 maxZ = pz + rd;
 
-    CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * rd));
+    CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
 
     dbGetChunksInRegion(client, minX, maxX, minY, maxY, minZ, maxZ);

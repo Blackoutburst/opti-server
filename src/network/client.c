@@ -244,7 +244,6 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 
-
     //serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(tempBuff);
     free(packet);
