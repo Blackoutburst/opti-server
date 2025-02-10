@@ -1,7 +1,7 @@
 ## Information
 - Use **BIG ENDIAN** to communicate with the server
 - Server doesn't send empty chunk
-- TCP uses port **15000**
+- TCP uses port **20000**
 - Chunk size is **16**
 - Chunks are cubic
 
