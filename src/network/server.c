@@ -301,12 +301,17 @@ void removeClient(U32 id) {
             U32 totalBytesRead = 0;
             U32 bufferOffset = 0;
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
-                U32 blockCount = 0;
-                if (recv(client->socket, &blockCount, sizeof(U32), 0) <= 0) {
+                U32 bc = 0;
+                if (recv(client->socket, &bc, sizeof(U32), 0) <= 0) {
                     println("Data read failed");
                     removeClient(client->id);
                     return 0;
                 }
+                U32 blockCount = 0;
+                blockCount[0] = (bc >> 24) & 0xFF;
+                blockCount[1] = (bc >> 16) & 0xFF;
+                blockCount[2] = (bc >> 8 ) & 0xFF;
+                blockCount[3] = (bc)       & 0xFF;
 
                 size = blockCount * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
