@@ -33,6 +33,7 @@ S01UPDATE_BLOCK* decodePacketUpdateBlock(U8* buffer) {
 S02BLOCK_BULK_EDIT* decodePacketBlockBulkEdit(U8* buffer) {
     U8** bufferPtr = &buffer;
     U32 blockCount = getU32(bufferPtr);
+    printf("USED %i\n", blockCount);
 
     S02BLOCK_BULK_EDIT* packet = malloc(sizeof(S02BLOCK_BULK_EDIT));
     packet->blockCount = blockCount;
