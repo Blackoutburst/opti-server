@@ -227,6 +227,7 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
 
 void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     S04CLIENT_METADATA* packet = decodePacketClientMetadata(buffer);
+    free(buffer);
 
     U8 mRd = getServerMaxRenderDistance();
     U8 newRenderDistance = packet->renderDistance > mRd ? mRd : packet->renderDistance;
@@ -234,10 +235,18 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     client->renderDistance = newRenderDistance;
     memcpy(client->name, packet->name, 64);
 
+    C07UPDATE_ENTITY_METADATA newPacket;
+    newPacket.id = CLIENT_PACKET_UPDATE_ENTITY_METADATA;
+    newPacket.entityId = client->id;
+    memcpy(newPacket.name, client->name, 64);
+
+    
+    U8* tempBuff = encodePacketEntityMetadata(&newPacket);
+
     printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
-    serverBroadcast(buffer, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
-    free(buffer);
+    serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    free(tempBuff);
     free(packet);
 }
 
