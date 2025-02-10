@@ -30,7 +30,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         I32 y = sqlite3_column_int(stmt, 1);
         I32 z = sqlite3_column_int(stmt, 2);
         if (worldGetChunk(client, x, y, z)) continue;
-        
+
         const U8* data = sqlite3_column_blob(stmt, 3);
 
 
@@ -98,7 +98,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
             memcpy(blocksStr, chunks[i]->blocks, CHUNK_BLOCK_COUNT);
         }
 
-        sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
 
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
@@ -133,7 +133,7 @@ void dbAddChunk(CHUNK* chunk) {
         memcpy(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
     }
 
-    sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         printf("Failed to insert chunk: %i, %i, %i\n", chunk->position.x, chunk->position.y, chunk->position.z);
@@ -190,8 +190,15 @@ void dbInit(void) {
         println("Couldn't open [sqlite.db]");
         exit(1);
     }
-    sqlite3_exec(db, "PRAGMA journal_mode = MEMORY;", NULL, NULL, &errMsg);
-    sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, &errMsg);
+
+    sqlite3_exec(db, "PRAGMA journal_mode = MEMORY;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA foreign_keys = OFF;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA ignore_check_constraints = 1;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA page_size = 65536;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA temp_store = MEMORY;", NULL, NULL, NULL);
+    sqlite3_exec(db, "PRAGMA cache_size = 1000000;", NULL, NULL, NULL);
 
     println("Connected to local database [sqlite.db]");
 
