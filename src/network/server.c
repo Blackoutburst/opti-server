@@ -307,7 +307,8 @@ void removeClient(U32 id) {
                     removeClient(client->id);
                     return 0;
                 }
-                U32 blockCountLE = ((blockCountBE << 24) & 0xFF) | ((blockCountBE << 16) & 0xFF) | ((blockCountBE << 8) & 0xFF) | ((blockCountBE) & 0xFF);
+                U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
+                          
                 printf("%i\n", blockCountLE);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
