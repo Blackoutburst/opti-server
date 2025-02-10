@@ -43,7 +43,7 @@ void _serverSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     memcpy(packet.name, entity->name, 64);
 
     U8* buffer = encodePacketAddEntity(&packet);
-    _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY)); 
+    _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY));
 
     free(buffer);
 }
@@ -54,7 +54,7 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
     packet.entityId = entityId;
 
     U8* buffer = encodePacketRemoveEntity(&packet);
-    _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY)); 
+    _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY));
 
     free(buffer);
 }
@@ -79,7 +79,7 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
 
         init(&client->chunks);
         init(&client->dbChunks);
-        
+
         memcpy(client->name, name, 64);
         free(name);
 
@@ -135,10 +135,10 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
         client->yaw = 0;
         client->pitch = 0;
         client->renderDistance = 2;
-        
+
         init(&client->chunks);
         init(&client->dbChunks);
-        
+
         memcpy(client->name, name, 64);
         free(name);
 
@@ -249,7 +249,7 @@ void removeClient(U32 id) {
             }
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
-            if (f != NULL) 
+            if (f != NULL)
                 f(client, dataBuffer);
             else
                 free(dataBuffer);
@@ -289,7 +289,7 @@ void removeClient(U32 id) {
             }
 
             void (*f)(TCP_CLIENT*, U8*) = getServerPacketFunction(packetId);
-            if (f != NULL) 
+            if (f != NULL)
                 f(client, dataBuffer);
             else
                 free(dataBuffer);
@@ -315,12 +315,12 @@ void removeClient(U32 id) {
     void serverBroadcastPOSIX(U8* buffer, U32 size) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
-            send(tcpClients[i]->socket, buffer, size, 0);
+            send(tcpClients[i]->socket, buffer, size, MSG_NOSIGNAL);
         }
     }
     void serverWritePOSIX(TCP_CLIENT* client, U8* buffer, U32 size) {
         if (client == NULL) return;
-        send(client->socket, buffer, size, 0);
+        send(client->socket, buffer, size, MSG_NOSIGNAL);
     }
 #endif
 
@@ -406,7 +406,7 @@ void serverAccept(void) {
             serverClean();
             return;
         }
-        
+
         while (running) {
             serverAccept();
         }
@@ -418,7 +418,7 @@ void serverAccept(void) {
             serverClean();
             return;
         }
-        
+
         while (running) {
             serverAccept();
         }
@@ -438,7 +438,7 @@ void serverListen(void) {
 
 /// CLEAN ///
 #if defined(_WIN32) || defined(_WIN64)
-    void serverCleanWIN(void) {        
+    void serverCleanWIN(void) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
             closesocket(tcpClients[i]->socket);

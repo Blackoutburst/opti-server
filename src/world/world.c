@@ -69,7 +69,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 minZ = pz - rd;
     I32 maxZ = pz + rd;
 
-    CHUNK* chunksToAdd = malloc(sizeof(CHUNK) * CUBE(2 * rd));
+    CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * rd));
     U32 addIndex = 0;
 
     dbGetChunksInRegion(client, minX, maxX, minY, maxY, minZ, maxZ);
@@ -81,45 +81,43 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         if (worldGetChunk(client, x, y, z)) continue;
 
         U8** data = get(&client->dbChunks, chunkHash(x, y, z));
-        
         CHUNK* c = NULL;
         if (data == NULL) {
             c = chunkCreate(x, y, z);
-            chunksToAdd[addIndex].position = c->position;
-            chunksToAdd[addIndex].monotype = c->monotype;
-            if (c->monotype) {
-                chunksToAdd[addIndex].blocks = malloc(sizeof(U8));
-                chunksToAdd[addIndex].blocks[0] = c->blocks[0];
-            } else {
-                chunksToAdd[addIndex].blocks = malloc(CHUNK_BLOCK_COUNT);
-                memcpy(chunksToAdd[addIndex].blocks, c->blocks, CHUNK_BLOCK_COUNT);
-            }
+            chunksToAdd[addIndex] = c;
             addIndex++;
+
+            worldAddChunk(client, c);
+
+            if (chunkIsEmpty(c)) {
+                continue;
+            }
+            if (chunkIsMonotype(c)) {
+                clientSendMonotypeChunk(client, c);
+                continue;
+            }
+            clientSendChunk(client, c);
         } else {
             c = chunkAssemble(x, y, z, *data);
-        }
+            worldAddChunk(client, c);
 
-        worldAddChunk(client, c);
-
-        if (chunkIsEmpty(c)) {
+            if (chunkIsEmpty(c)) {
+                chunkClean(c);
+                continue;
+            }
+            if (chunkIsMonotype(c)) {
+                clientSendMonotypeChunk(client, c);
+                chunkClean(c);
+                continue;
+            }
+            clientSendChunk(client, c);
             chunkClean(c);
-            continue;
         }
-
-        if (chunkIsMonotype(c)) {
-            clientSendMonotypeChunk(client, c);
-            chunkClean(c);
-            continue;
-        }
-        clientSendChunk(client, c);
-        chunkClean(c);
     }}}
 
     clear(&client->dbChunks);
 
-    if (addIndex > 0)
-        dbAddChunks(chunksToAdd, addIndex);
-    
+    if (addIndex) dbAddChunks(chunksToAdd, addIndex);
     free(chunksToAdd);
 }
 

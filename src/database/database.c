@@ -11,13 +11,13 @@ static I8* errMsg = NULL;
 
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
-    
+
     const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
          println("Error preparing statement for dbGetChunksInRegion");
          return;
     }
-    
+
     sqlite3_bind_int(stmt, 1, minX);
     sqlite3_bind_int(stmt, 2, maxX);
     sqlite3_bind_int(stmt, 3, minY);
@@ -29,18 +29,19 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         I32 x = sqlite3_column_int(stmt, 0);
         I32 y = sqlite3_column_int(stmt, 1);
         I32 z = sqlite3_column_int(stmt, 2);
+        if (worldGetChunk(client, x, y, z)) continue;
+        
         const U8* data = sqlite3_column_blob(stmt, 3);
 
-        if (worldGetChunk(client, x, y, z)) continue;
 
         if (data) {
             U8* blocks = malloc(CHUNK_BLOCK_COUNT);
             memcpy(blocks, data, CHUNK_BLOCK_COUNT);
-            
+
             insert(&client->dbChunks, chunkHash(x, y, z), blocks);
         }
     }
-    
+
     sqlite3_finalize(stmt);
 }
 
@@ -72,7 +73,7 @@ U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
     return blocks;
 }
 
-void dbAddChunks(CHUNK* chunks, U32 count) {
+void dbAddChunks(CHUNK** chunks, U32 count) {
     sqlite3_stmt* stmt = NULL;
     const I8* sql = "INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?);";
     I32 rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
@@ -80,33 +81,34 @@ void dbAddChunks(CHUNK* chunks, U32 count) {
         printf("Failed to prepare bulk insert statement: %s\n", sqlite3_errmsg(db));
         return;
     }
-    
+
     sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
-    
+
     for (U32 i = 0; i < count; i++) {
-        sqlite3_bind_int(stmt, 1, chunks[i].position.x);
-        sqlite3_bind_int(stmt, 2, chunks[i].position.y);
-        sqlite3_bind_int(stmt, 3, chunks[i].position.z);
-        
-        I8 blocksStr[CHUNK_BLOCK_COUNT] = {0};
-        if (chunks[i].monotype) {
+        sqlite3_bind_int(stmt, 1, chunks[i]->position.x);
+        sqlite3_bind_int(stmt, 2, chunks[i]->position.y);
+        sqlite3_bind_int(stmt, 3, chunks[i]->position.z);
+
+        I8 blocksStr[CHUNK_BLOCK_COUNT];
+        if (chunks[i]->monotype) {
             for (I32 j = 0; j < CHUNK_BLOCK_COUNT; j++) {
-                blocksStr[j] = chunks[i].blocks[0];
+                blocksStr[j] = chunks[i]->blocks[0];
             }
         } else {
-            memcpy(blocksStr, chunks[i].blocks, CHUNK_BLOCK_COUNT);
+            memcpy(blocksStr, chunks[i]->blocks, CHUNK_BLOCK_COUNT);
         }
-        
+
         sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_TRANSIENT);
-        
+
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
-            printf("Failed to insert chunk at (%i, %i, %i): %s\n", chunks[i].position.x, chunks[i].position.y, chunks[i].position.z, sqlite3_errmsg(db));
+            printf("Failed to insert chunk at (%i, %i, %i): %s\n", chunks[i]->position.x, chunks[i]->position.y, chunks[i]->position.z, sqlite3_errmsg(db));
         }
-        
+
         sqlite3_reset(stmt);
+        chunkClean(chunks[i]);
     }
-    
+
     sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
     sqlite3_finalize(stmt);
 }
@@ -130,7 +132,7 @@ void dbAddChunk(CHUNK* chunk) {
     } else {
         memcpy(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
     }
-    
+
     sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
@@ -177,7 +179,7 @@ void dbCreateTables(void) {
 void dbClean(void) {
     if (db == NULL) return;
     sqlite3_close(db);
-    
+
     db = NULL;
 }
 
@@ -192,6 +194,6 @@ void dbInit(void) {
     sqlite3_exec(db, "PRAGMA synchronous = OFF;", NULL, NULL, &errMsg);
 
     println("Connected to local database [sqlite.db]");
-    
+
     dbCreateTables();
 }
