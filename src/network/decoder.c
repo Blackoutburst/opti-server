@@ -36,7 +36,7 @@ S02BLOCK_BULK_EDIT* decodePacketBlockBulkEdit(U8* buffer) {
     S02BLOCK_BULK_EDIT* packet = malloc(sizeof(S02BLOCK_BULK_EDIT));
     packet->blockCount = blockCount;
     printf("%i %i %i\n", sizeof(BLOCK_BULK_EDIT), blockCount, sizeof(BLOCK_BULK_EDIT) * blockCount);
-    packet->blocks = malloc(sizeof(BLOCK_BULK_EDIT) * blockCount);
+    //packet->blocks = malloc(sizeof(BLOCK_BULK_EDIT) * blockCount);
 
     for (U32 i = 0; i < blockCount; i++) {
         packet->blocks[i].type = getU8(bufferPtr);
