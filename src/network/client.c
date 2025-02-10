@@ -240,12 +240,12 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     newPacket.entityId = client->id;
     memcpy(newPacket.name, client->name, 64);
 
+    printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
     
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 
-    printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
-    serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    //serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(tempBuff);
     free(packet);
 }
