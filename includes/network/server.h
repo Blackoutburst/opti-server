@@ -65,6 +65,7 @@ struct tcpClient {
     void serverInitPOSIX(void);
 #endif
 
+void serverStop(void);
 U32 getClientId(void);
 U8 recvAll(TCP_CLIENT* client, U8* buffer, U32 size, U32 bufferOffset);
 void _serverSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity);

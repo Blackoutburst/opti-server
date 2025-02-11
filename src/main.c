@@ -19,7 +19,7 @@ I32 main(I32 argc, I8** argv) {
     if (argc > 1) updateRenderDistance(argv[1]);
 
     printf("Starting server with a max render distance of: %i\n", renderDistance);
-    
+
     dbInit();
     serverInit();
     serverClean();

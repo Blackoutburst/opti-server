@@ -11,6 +11,8 @@
 #include "network/encoder.h"
 #include "network/packet.h"
 
+#include <sanitizer/lsan_interface.h>
+
 static U8 status = 0;
 
 static U8 running = 0;
@@ -25,6 +27,12 @@ static TCP_CLIENT** tcpClients = NULL;
     static pthread_mutex_t mutex;
     static I32 serverSocket = 0;
 #endif
+
+void serverStop(void) {
+    running = 0;
+    __lsan_do_leak_check();
+    printf("Stopping server\n");
+}
 
 U32 getClientId(void) {
     return clientId;
@@ -222,6 +230,7 @@ void removeClient(U32 id) {
             #endif
             cleanup(&tcpClients[i]->chunks);
             cleanup(&tcpClients[i]->dbChunks);
+            joinThread(tcpClients[i]->thread);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
             break;
@@ -258,12 +267,12 @@ void removeClient(U32 id) {
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
                 if (!recvAll(client, (U8*)(&blockCountBE), sizeof(U32), 0)) return 0;
-                
+
                 U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
                 bufferOffset = 4;
-                
+
                 dataBuffer[0] = (blockCountBE)       & 0xFF;
                 dataBuffer[1] = (blockCountBE >> 8 ) & 0xFF;
                 dataBuffer[2] = (blockCountBE >> 16) & 0xFF;
@@ -306,12 +315,12 @@ void removeClient(U32 id) {
             if (packetId == SERVER_PACKET_BLOCK_BULK_EDIT) {
                 U32 blockCountBE = 0;
                 if (!recvAll(client, (U8*)(&blockCountBE), sizeof(U32), 0)) return NULL;
-                
+
                 U32 blockCountLE = ((blockCountBE >> 24) & 0xFF) | ((blockCountBE >> 8)  & 0xFF00) | ((blockCountBE << 8)  & 0xFF0000) | ((blockCountBE << 24) & 0xFF000000);
                 size = blockCountLE * sizeof(BLOCK_BULK_EDIT);
                 dataBuffer = malloc(size + sizeof(U32));
                 bufferOffset = 4;
-                
+
                 dataBuffer[0] = (blockCountBE)       & 0xFF;
                 dataBuffer[1] = (blockCountBE >> 8 ) & 0xFF;
                 dataBuffer[2] = (blockCountBE >> 16) & 0xFF;
@@ -475,10 +484,7 @@ void serverListen(void) {
     void serverCleanWIN(void) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
-            closesocket(tcpClients[i]->socket);
-            joinThread(tcpClients[i]->thread);
-            free(tcpClients[i]);
-            tcpClients[i] = NULL;
+            removeClient(tcpClients[i]->id);
         }
 
         running = 0;
@@ -490,10 +496,7 @@ void serverListen(void) {
     void serverCleanPOSIX(void) {
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
             if (tcpClients[i] == NULL) continue;
-            close(tcpClients[i]->socket);
-            joinThread(tcpClients[i]->thread);
-            free(tcpClients[i]);
-            tcpClients[i] = NULL;
+            removeClient(tcpClients[i]->id);
         }
 
         running = 0;

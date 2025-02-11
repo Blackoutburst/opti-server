@@ -15,6 +15,8 @@ U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
 void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     if (client == NULL) return;
 
+    if (worldGetChunk(client, chunk->position.x, chunk->position.y, chunk->position.z)) return;
+
     VECTORI elem = { chunk->position.x, chunk->position.y, chunk->position.z };
     insert(&client->chunks, chunkHash(chunk->position.x, chunk->position.y, chunk->position.z), elem);
 }
@@ -77,10 +79,12 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
-        if (y < -32) continue;
-        if (worldGetChunk(client, x, y, z)) continue;
-
         U8** data = get(&client->dbChunks, chunkHash(x, y, z));
+        if (y < -32 || worldGetChunk(client, x, y, z)) {
+            if (data != NULL) free(*data);
+            continue;
+        }
+
         CHUNK* c = NULL;
         if (data == NULL) {
             c = chunkCreate(x, y, z);

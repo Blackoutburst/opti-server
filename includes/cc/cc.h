@@ -215,7 +215,7 @@ Including the library:
       Define this flag to withhold the unprefixed names.
 
   The following can be defined anywhere and affect all calls to API macros where the definition is visible:
-  
+
     #define CC_REALLOC our_realloc
       Causes API macros to use a custom realloc function rather than the one in the standard library.
 
@@ -493,7 +493,7 @@ API:
 
       Declares an uninitialized set named cntr.
       el_ty must be a type, or alias for a type, for which comparison and hash functions have been defined (this
-      requirement is enforced internally such that neglecting it causes a compiler error).  
+      requirement is enforced internally such that neglecting it causes a compiler error).
       For types with in-built comparison and hash functions, and for details on how to declare new comparison and hash
       functions, see "Destructor, comparison, and hash functions and custom max load factors" below.
 
@@ -773,7 +773,7 @@ Version history:
 
   23/08/2024 1.3.1: Fixed missing static inline qualifier on an internal omap function.
   29/07/2024 1.3.0: Added ordered map and ordered set.
-                    Fixed cc_erase_itr to return a correctly typed pointer-iterator instead of void *. 
+                    Fixed cc_erase_itr to return a correctly typed pointer-iterator instead of void *.
                     Fixed a bug in list that caused cc_next and cc_prev to behave incorrectly when passed an r_end and
                     end pointer-iterator, respectively.
                     Deprecated reverse iteration (cc_last, cc_prev, and cc_r_end) for maps and sets.
@@ -1386,7 +1386,7 @@ static inline int cc_first_nonzero_uint16( uint64_t a )
 {
   if( cc_is_little_endian() )
     return __builtin_ctzll( a ) / 16;
-  
+
   return __builtin_clzll( a ) / 16;
 }
 
@@ -1395,7 +1395,7 @@ static inline int cc_last_nonzero_uint16( uint64_t a )
 {
   if( cc_is_little_endian() )
     return __builtin_clzll( a ) / 16;
-  
+
   return __builtin_ctzll( a ) / 16;
 }
 
@@ -1446,12 +1446,12 @@ static inline int cc_first_nonzero_uint16( uint64_t a )
   memcpy( &half, &a, sizeof( uint32_t ) );
   if( !half )
     result += 2;
-  
+
   uint16_t quarter;
   memcpy( &quarter, (char *)&a + result * sizeof( uint16_t ), sizeof( uint16_t ) );
   if( !quarter )
     result += 1;
-  
+
   return result;
 }
 
@@ -1464,12 +1464,12 @@ static inline int cc_last_nonzero_uint16( uint64_t a )
   memcpy( &half, (char *)&a + sizeof( uint32_t ), sizeof( uint32_t ) );
   if( !half )
     result -= 2;
-  
+
   uint16_t quarter;
   memcpy( &quarter, (char *)&a + result * sizeof( uint16_t ), sizeof( uint16_t ) );
   if( !quarter )
     result -= 1;
-  
+
   return 3 - result;
 }
 
@@ -2057,7 +2057,7 @@ static inline void *cc_list_alloc_hdr(
   new_cntr->r_end.prev = &cc_list_hdr( cntr )->r_end;
   new_cntr->end.next = &cc_list_hdr( cntr )->end;
 
-  new_cntr->size = 0; 
+  new_cntr->size = 0;
   return new_cntr;
 }
 
@@ -2127,7 +2127,7 @@ static inline cc_allocing_fn_result_ty cc_list_insert(
 
   ++cc_list_hdr( cntr )->size;
 
-  return cc_make_allocing_fn_result( cntr, cc_list_el( new_node ) );  
+  return cc_make_allocing_fn_result( cntr, cc_list_el( new_node ) );
 }
 
 static inline cc_allocing_fn_result_ty cc_list_push(
@@ -2172,7 +2172,7 @@ static inline void *cc_list_erase(
   cc_listnode_hdr_ty *next = hdr->next;
   hdr->prev->next = next;
   next->prev = hdr->prev;
-  
+
   if( el_dtor )
     el_dtor( *(void **)key );
 
@@ -2261,7 +2261,7 @@ static inline void *cc_list_init_clone(
     if( !result.other_ptr )
     {
       // Erase incomplete clone without invoking destructors.
-      
+
       void *j = cc_list_first( result.new_cntr, 0 /* Dummy */, 0 /* Dummy */ );
       while( j != cc_list_end( result.new_cntr, 0 /* Dummy */, 0 /* Dummy */ ) )
       {
@@ -2838,7 +2838,7 @@ static inline void *cc_map_make_rehash(
       if( cc_map_hdr( cntr )->metadata[ i ] != CC_MAP_EMPTY )
       {
         void *key = cc_map_key( cntr, i, el_size, layout );
-        if( CC_UNLIKELY( !cc_map_reinsert(            
+        if( CC_UNLIKELY( !cc_map_reinsert(
           new_cntr,
           cc_map_el( cntr, i, el_size, layout ),
           key,
@@ -3714,7 +3714,7 @@ static inline void *cc_omap_el( void *hdr )
 
 // Easy access to a key from a pointer to an ordered map node header.
 static inline void *cc_omap_key(
-  void *hdr, 
+  void *hdr,
   size_t el_size,
   uint64_t layout
 )
@@ -3773,7 +3773,7 @@ static inline void *cc_omap_first_or_last(
 
   if( node == cc_omap_hdr( cntr )->sentinel )
     return cc_omap_hdr( cntr )->sentinel + dir;
-  
+
   while( node->children[ !dir ] != cc_omap_hdr( cntr )->sentinel )
     node = node->children[ !dir ];
 
@@ -3818,7 +3818,7 @@ static inline void *cc_omap_iterate(
 
     return cc_omap_el( node );
   }
-  
+
   while( node->parent != cc_omap_hdr( cntr )->sentinel )
   {
     if( node->parent->children[ !dir ] == node )
@@ -3826,7 +3826,7 @@ static inline void *cc_omap_iterate(
 
     node = node->parent;
   }
-  
+
   return cc_omap_r_end_or_end( cntr, dir );
 }
 
@@ -3989,7 +3989,7 @@ static inline cc_allocing_fn_result_ty cc_omap_insert(
         memcpy( cc_omap_el( node ), el, el_size );
       }
 
-      return cc_make_allocing_fn_result( cntr, cc_omap_el( node ) ); 
+      return cc_make_allocing_fn_result( cntr, cc_omap_el( node ) );
     }
 
     parent = node;
@@ -4021,7 +4021,7 @@ static inline cc_allocing_fn_result_ty cc_omap_insert(
   cc_omap_post_insert_fixup( cntr, new_node );
 
   ++cc_omap_hdr( cntr )->size;
-  return cc_make_allocing_fn_result( cntr, cc_omap_el( new_node ) );  
+  return cc_make_allocing_fn_result( cntr, cc_omap_el( new_node ) );
 }
 
 // Standard binary search tree lookup.
@@ -5862,7 +5862,7 @@ cc_layout( CC_CNTR_ID( cntr ), CC_EL_SIZE( cntr ), alignof( CC_EL_TY( cntr ) ), 
 
 #endif
 
-// Macros for extracting the type and function body or load factor from user-defined DTOR, CMPR, HASH, and LOAD macros. 
+// Macros for extracting the type and function body or load factor from user-defined DTOR, CMPR, HASH, and LOAD macros.
 #define CC_1ST_ARG_( _1, ... )    _1
 #define CC_1ST_ARG( ... )         CC_MSVC_PP_FIX( CC_1ST_ARG_( __VA_ARGS__ ) )
 #define CC_OTHER_ARGS_( _1, ... ) __VA_ARGS__

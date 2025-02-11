@@ -42,6 +42,8 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     client->chunkPosition.x = px;
     client->chunkPosition.y = py;
     client->chunkPosition.z = pz;
+
+    if (client->position.z < -100) serverStop();
 }
 
 void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
@@ -241,7 +243,7 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     memcpy(newPacket.name, client->name, 64);
 
     printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
-    
+
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 
     //serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
