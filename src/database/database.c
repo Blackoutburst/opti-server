@@ -196,9 +196,7 @@ void dbInit(void) {
     sqlite3_exec(db, "PRAGMA foreign_keys = OFF;", NULL, NULL, NULL);
     sqlite3_exec(db, "PRAGMA ignore_check_constraints = 1;", NULL, NULL, NULL);
     sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", NULL, NULL, NULL);
-    sqlite3_exec(db, "PRAGMA page_size = 65536;", NULL, NULL, NULL);
     sqlite3_exec(db, "PRAGMA temp_store = MEMORY;", NULL, NULL, NULL);
-    sqlite3_exec(db, "PRAGMA cache_size = 1000000;", NULL, NULL, NULL);
 
     println("Connected to local database [sqlite.db]");
 

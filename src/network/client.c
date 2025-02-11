@@ -42,8 +42,6 @@ void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     client->chunkPosition.x = px;
     client->chunkPosition.y = py;
     client->chunkPosition.z = pz;
-
-    if (client->position.z < -100) serverStop();
 }
 
 void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {

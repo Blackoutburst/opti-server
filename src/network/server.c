@@ -11,8 +11,6 @@
 #include "network/encoder.h"
 #include "network/packet.h"
 
-#include <sanitizer/lsan_interface.h>
-
 static U8 status = 0;
 
 static U8 running = 0;
@@ -30,7 +28,6 @@ static TCP_CLIENT** tcpClients = NULL;
 
 void serverStop(void) {
     running = 0;
-    __lsan_do_leak_check();
     printf("Stopping server\n");
 }
 
