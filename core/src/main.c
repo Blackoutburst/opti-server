@@ -4,6 +4,7 @@
 #include "utils/types.h"
 #include "network/server.h"
 #include "database/database.h"
+#include "library/library.h"
 
 static U8 renderDistance = 2;
 
@@ -15,17 +16,11 @@ void updateRenderDistance(I8* arg) {
     renderDistance = atoi(arg);
 }
 
-#include <windows.h>
-#include <stdio.h>
-
-#include "library/library.h"
-
 void loadLibraries()
 {
     LIBRARY lib_worldgen = libraryLoad("worldgen.dll");
 
     chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
-
     // libraryFree(&lib_worldgen);
 }
 

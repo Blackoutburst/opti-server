@@ -6,7 +6,7 @@
 typedef struct library LIBRARY;
 struct library {
     HINSTANCE instanceLib;
-    U8* name;
+    I8* name;
     U8 isValid;
 };
 
