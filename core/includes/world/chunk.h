@@ -17,6 +17,9 @@ struct chunk {
     U8* blocks;
 };
 
+typedef void (*worldgen_genChunk)(U8* blocks, I32 x, I32 y, I32 z);
+
+void chunkSetGenChunkFunction(worldgen_genChunk func);
 U8* chunkGenerate(I32 x, I32 y, I32 z);
 U8 chunkIsMonotype(CHUNK* chunk);
 U8 chunkIsEmpty(CHUNK* chunk);

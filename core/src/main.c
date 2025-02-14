@@ -15,10 +15,25 @@ void updateRenderDistance(I8* arg) {
     renderDistance = atoi(arg);
 }
 
+#include <windows.h>
+#include <stdio.h>
+
+#include "library/library.h"
+
+void loadLibraries()
+{
+    LIBRARY lib_worldgen = libraryLoad("worldgen.dll");
+
+    chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
+
+    // libraryFree(&lib_worldgen);
+}
+
 I32 main(I32 argc, I8** argv) {
     if (argc > 1) updateRenderDistance(argv[1]);
-
     printf("Starting server with a max render distance of: %i\n", renderDistance);
+
+    loadLibraries();
 
     dbInit();
     serverInit();

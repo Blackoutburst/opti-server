@@ -3,15 +3,24 @@
 #include "utils/ioUtils.h"
 #include "world/chunk.h"
 
+#include "library/library.h"
+
+static worldgen_genChunk func_genChunk = NULL;
+
+void chunkSetGenChunkFunction(worldgen_genChunk func) {
+    func_genChunk = func;
+}
+
 U8* chunkGenerate(I32 x, I32 y, I32 z) {
     U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);
-    for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocks[i] = 0;
 
-    for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) {
-        I32 bx = (i % CHUNK_SIZE);
-        I32 by = (i / CHUNK_SIZE) % CHUNK_SIZE;
-        I32 bz = (i / (CHUNK_SIZE * CHUNK_SIZE)) % CHUNK_SIZE;
-        blocks[i] = y + by < 0;
+    if (func_genChunk != NULL) {
+        func_genChunk(blocks, x, y, z);
+    } else {
+        for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) {
+            I32 by = (i / CHUNK_SIZE) % CHUNK_SIZE;
+            blocks[i] = y + by < 0;
+        }
     }
 
     return blocks;
