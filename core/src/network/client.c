@@ -240,7 +240,12 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     C06CHAT newPacket;
     newPacket.id = CLIENT_PACKET_CHAT;
     U8 message[4096];
-    snprintf(message, 4096, "%s: %s", client->name, packet->message);
+    U8* encodedName = encodeString(client->name, 64);
+    U8* encodedMessage = encodeString(packet->message, 4096);
+    
+    snprintf(message, 4096, "%s: %s", encodedName, encodedMessage);
+    free(encodedName);
+    free(encodedMessage);
     
     memcpy(newPacket.message, message, 4096);
     printf("%s\n", message);
@@ -265,7 +270,10 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     C07UPDATE_ENTITY_METADATA newPacket;
     newPacket.id = CLIENT_PACKET_UPDATE_ENTITY_METADATA;
     newPacket.entityId = client->id;
-    memcpy(newPacket.name, client->name, 64);
+
+    U8* encodedName = encodeString(client->name, 64);
+    memcpy(newPacket.name, encodedName, 64);
+    free(encodedName);
 
     printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
