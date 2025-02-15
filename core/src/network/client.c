@@ -170,8 +170,7 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 
         chunk->monotype = chunkIsMonotype(chunk);
 
-        if (get(&editedChunks, chunkHash(cx, cy, cz)) == NULL)
-            insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
+        insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
 
         dbAddChunk(chunk);
     }
