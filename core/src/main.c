@@ -16,8 +16,7 @@ void updateRenderDistance(I8* arg) {
     renderDistance = atoi(arg);
 }
 
-void loadLibraries()
-{
+void loadLibraries(void) {
     LIBRARY lib_worldgen = libraryLoad("worldgen.dll");
 
     chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
