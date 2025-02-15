@@ -78,8 +78,6 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
 
     chunk->monotype = chunkIsMonotype(chunk);
 
-    dbAddChunk(chunk);
-
     if (chunk->monotype) {
         C05SEND_MONOTYPE_CHUNK p;
         p.id = CLIENT_PACKET_SEND_MONOTYPE_CHUNK;
@@ -128,6 +126,7 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
         free(tempBuff);
     }
 
+    dbAddChunk(chunk);
     chunkClean(chunk);
 }
 
@@ -174,6 +173,7 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         if (get(&editedChunks, chunkHash(cx, cy, cz)) == NULL)
             insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
 
+        dbAddChunk(chunk);
     }
 
     TCP_CLIENT** tcpClients = getAllClients();
@@ -225,8 +225,6 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
             }
             free(tempBuff);
         }
-
-        dbAddChunk(chunk);
         chunkClean(chunk);
     }
 
