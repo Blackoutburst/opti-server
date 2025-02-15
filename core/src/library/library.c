@@ -1,8 +1,9 @@
-#include "library/library.h"
 #include <stdio.h>
 #include "utils/string.h"
 
 #if defined(_WIN32) || defined(_WIN64)
+    #include "library/library.h"
+    
     const LIBRARY invalidLibrary = {NULL, 0, 0};
 
     LIBRARY libraryLoad(const I8* name) {
