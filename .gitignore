@@ -12,3 +12,7 @@ server.out
 
 ### SQLite ###
 *.db
+
+**/build/
+.xmake
+*.dll

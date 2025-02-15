@@ -1,0 +1,3 @@
+[submodule ".\\worldgen\\lib\\fastnoise2"]
+	path = .\\worldgen\\lib\\fastnoise2
+	url = https://github.com/Auburn/FastNoise2

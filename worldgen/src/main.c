@@ -3,6 +3,8 @@
 
 #define CHUNK_SIZE (16)
 
+#include "FastNoise.h"
+
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
