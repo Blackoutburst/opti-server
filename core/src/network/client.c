@@ -170,8 +170,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 
         chunk->monotype = chunkIsMonotype(chunk);
 
-        CHUNK* oldChunk = *get(&editedChunks, chunkHash(cx, cy, cz));
-        if (oldChunk != NULL) chunkClean(oldChunk);
+        CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
+        if (oldChunk != NULL) chunkClean(*oldChunk);
         
         insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
 
