@@ -234,8 +234,22 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 }
 
 void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
-    serverBroadcast(buffer, sizeof(CLIENT_PACKET_CHAT));
+    S03CHAT* packet = decodePacketChat(buffer);
     free(buffer);
+
+    C06CHAT newPacket;
+    newPacket.id = CLIENT_PACKET_CHAT;
+    U8 message[4096];
+    snprintf(message, 4096, "%s: %s", client->name, packet->message);
+    
+    memcpy(newPacket.message, message, 4096);
+    printf("%s\n", message);
+
+    U8* tempBuff = encodePacketChat(&newPacket);
+
+    serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_CHAT));
+    free(tempBuff);
+    free(packet);
 }
 
 void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
@@ -257,7 +271,7 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
 
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 
-    //serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(tempBuff);
     free(packet);
 }
