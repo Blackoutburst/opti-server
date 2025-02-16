@@ -2,7 +2,6 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("c23", "c++20")
 
-
 package("fastnoise2")
     add_deps("cmake")
     set_sourcedir(path.join(os.scriptdir(), "lib/fastnoise2"))
