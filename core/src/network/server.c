@@ -252,7 +252,7 @@ void removeClient(U32 id) {
                 return 0;
             }
 
-            U16 size = getServerPacketSize(packetId);
+            U32 size = getServerPacketSize(packetId);
             if (size <= 0) {
                 printf("Invalid packet %i size: %i\n", packetId, size);
                 removeClient(client->id);
@@ -300,7 +300,7 @@ void removeClient(U32 id) {
                 removeClient(client->id);
                 return NULL;
             }
-            U16 size = getServerPacketSize(packetId);
+            U32 size = getServerPacketSize(packetId);
             if (size <= 0) {
                 printf("Invalid packet %i size: %i\n", packetId, size);
                 removeClient(client->id);
