@@ -2,10 +2,12 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("c23", "c++20")
 
+
 package("fastnoise2")
     add_deps("cmake")
-    set_sourcedir(path.join(os.scriptdir(), "submodules/fastnoise2"))
-    -- add_includedirs("$(buildir)/submodules/fastnoise2/include")
+    set_sourcedir(path.join(os.scriptdir(), "lib/fastnoise2"))
+    print(path.join(os.scriptdir(), "lib/fastnoise2"))
+-- add_includedirs("$(buildir)/submodules/fastnoise2/include")
 
     on_install(function (package)
         local configs = {}
