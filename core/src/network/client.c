@@ -150,11 +150,17 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         I32 cx = TO_CHUNK_POS(x);
         I32 cy = TO_CHUNK_POS(y);
         I32 cz = TO_CHUNK_POS(z);
-        U8* data = dbGetChunkBlocks(cx, cy, cz);
-        if (data == NULL) {
-            chunk = chunkCreate(cx, cy, cz);
-        } else {
-            chunk = chunkAssemble(cx, cy, cz, data);
+
+        CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
+        if (oldChunk != NULL) chunk = *oldChunk;
+
+        if (chunk == NULL) {
+            U8* data = dbGetChunkBlocks(cx, cy, cz);
+            if (data == NULL) {
+                chunk = chunkCreate(cx, cy, cz);
+            } else {
+                chunk = chunkAssemble(cx, cy, cz, data);
+            }
         }
 
         if (chunk->monotype) {
@@ -169,13 +175,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         chunk->blocks[index] = type;
 
         chunk->monotype = chunkIsMonotype(chunk);
-
-        CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
-        if (oldChunk != NULL) chunkClean(*oldChunk);
         
         insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
-
-        dbAddChunk(chunk);
     }
 
     TCP_CLIENT** tcpClients = getAllClients();
@@ -227,6 +228,7 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
             }
             free(tempBuff);
         }
+        dbAddChunk(chunk);
         chunkClean(chunk);
     }
 
