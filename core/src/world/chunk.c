@@ -3,25 +3,27 @@
 #include "utils/ioUtils.h"
 #include "world/chunk.h"
 
-#include "library/library.h"
+#if defined(_WIN32) || defined(_WIN64)
+    #include "library/library.h"
 
-static worldgen_genChunk func_genChunk = NULL;
+    static worldgen_genChunk func_genChunk = NULL;
 
-void chunkSetGenChunkFunction(worldgen_genChunk func) {
-    func_genChunk = func;
-}
+    void chunkSetGenChunkFunction(worldgen_genChunk func) {
+        func_genChunk = func;
+    }
+#endif
 
 U8* chunkGenerate(I32 x, I32 y, I32 z) {
     U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);
 
-    if (func_genChunk != NULL) {
-        func_genChunk(blocks, x, y, z);
-    } else {
+    //if (func_genChunk != NULL) {
+    //    func_genChunk(blocks, x, y, z);
+    //} else {
         for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) {
             I32 by = (i / CHUNK_SIZE) % CHUNK_SIZE;
             blocks[i] = y + by < 0;
         }
-    }
+    //}
 
     return blocks;
 }
