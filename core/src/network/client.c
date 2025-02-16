@@ -170,8 +170,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 
         chunk->monotype = chunkIsMonotype(chunk);
 
-        CHUNK* oldChunk = *get(&editedChunks, chunkHash(cx, cy, cz));
-        if (oldChunk != NULL) chunkClean(oldChunk);
+        CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
+        if (oldChunk != NULL) chunkClean(*oldChunk);
         
         insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
 
@@ -234,8 +234,27 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 }
 
 void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
-    serverBroadcast(buffer, sizeof(CLIENT_PACKET_CHAT));
+    S03CHAT* packet = decodePacketChat(buffer);
     free(buffer);
+
+    C06CHAT newPacket;
+    newPacket.id = CLIENT_PACKET_CHAT;
+    U8 message[4096];
+    U8* encodedName = encodeString(client->name, 64);
+    U8* encodedMessage = encodeString(packet->message, 4096);
+    
+    snprintf(message, 4096, "%s: %s", encodedName, encodedMessage);
+    free(encodedName);
+    free(encodedMessage);
+    
+    memcpy(newPacket.message, message, 4096);
+    printf("%s\n", message);
+
+    U8* tempBuff = encodePacketChat(&newPacket);
+
+    serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_CHAT));
+    free(tempBuff);
+    free(packet);
 }
 
 void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
@@ -251,13 +270,16 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     C07UPDATE_ENTITY_METADATA newPacket;
     newPacket.id = CLIENT_PACKET_UPDATE_ENTITY_METADATA;
     newPacket.entityId = client->id;
-    memcpy(newPacket.name, client->name, 64);
+
+    U8* encodedName = encodeString(client->name, 64);
+    memcpy(newPacket.name, encodedName, 64);
+    free(encodedName);
 
     printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 
-    //serverBroadcast(tempBuff, sizeof(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
     free(tempBuff);
     free(packet);
 }
