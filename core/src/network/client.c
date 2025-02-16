@@ -134,10 +134,6 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
     S02BLOCK_BULK_EDIT* packet = decodePacketBlockBulkEdit(buffer);
     U32 blockCount = packet->blockCount;
     BLOCK_BULK_EDIT* blocks = packet->blocks;
-    
-    free(packet->blocks);
-    free(packet);
-    free(buffer);
 
     map(U32, CHUNK*) editedChunks;
     init(&editedChunks);
@@ -177,14 +173,14 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         chunk->blocks[index] = type;
 
         chunk->monotype = chunkIsMonotype(chunk);
-        
+
         if (oldChunk == NULL) insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
     }
 
     TCP_CLIENT** tcpClients = getAllClients();
     for_each(&editedChunks, key, value) {
         CHUNK* chunk = *value;
-        
+
         if (chunk->monotype) {
             C05SEND_MONOTYPE_CHUNK p;
             p.id = CLIENT_PACKET_SEND_MONOTYPE_CHUNK;
@@ -234,6 +230,10 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         chunkClean(chunk);
     }
 
+    free(packet->blocks);
+    free(packet);
+    free(buffer);
+
     cleanup(&editedChunks);
 }
 
@@ -246,11 +246,11 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     U8 message[4096];
     U8* encodedName = encodeString(client->name, 64);
     U8* encodedMessage = encodeString(packet->message, 4096);
-    
+
     snprintf(message, 4096, "%s: %s", encodedName, encodedMessage);
     free(encodedName);
     free(encodedMessage);
-    
+
     memcpy(newPacket.message, message, 4096);
     printf("%s\n", message);
 
@@ -399,4 +399,3 @@ void clientSendClientMetadata(TCP_CLIENT* client, TCP_CLIENT* entity) {
     free(encodedString);
     free(buffer);
 }
-
