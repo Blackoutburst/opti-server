@@ -13,6 +13,8 @@
 #include "world/world.h"
 #include "world/chunk.h"
 
+#include <sanitizer/lsan_interface.h>
+
 void clientReceiveUpdateEntity(TCP_CLIENT* client, U8* buffer) {
     S00UPDATE_ENTITY* packet = decodePacketUpdateEntity(buffer);
 
@@ -251,6 +253,8 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     
     memcpy(newPacket.message, message, 4096);
     printf("%s\n", message);
+
+    if (packet->message[0] == 'a') __lsan_do_leak_check();
 
     U8* tempBuff = encodePacketChat(&newPacket);
 
