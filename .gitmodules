@@ -1,3 +1,6 @@
 [submodule ".\\worldgen\\lib\\fastnoise2"]
 	path = .\\worldgen\\lib\\fastnoise2
 	url = https://github.com/Auburn/FastNoise2
+[submodule ".\\worldgen\\lib\\glm"]
+	path = .\\worldgen\\lib\\glm
+	url = https://github.com/g-truc/glm
