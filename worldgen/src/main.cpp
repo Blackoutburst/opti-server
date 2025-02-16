@@ -5,13 +5,13 @@
 #define CHUNK_SIZE (16)
 
 #include "FastNoise/FastNoise.h"
-// #include "main.h"
+#include "main.h"
 
-extern "C" void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
-    // auto fn = FastNoise::New<FastNoise::Perlin>();
+void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
+    auto fn = FastNoise::New<FastNoise::Perlin>();
 
     float hmap[4096] = {};
-    // fn->GenUniformGrid2D(hmap, 0, 0, 16, 16, 4, 0);
+    fn->GenUniformGrid2D(hmap, 0, 0, 16, 16, 4, 0);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -29,15 +29,4 @@ extern "C" void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     }
     }
     }
-}
-
-
-int main()
-{
-    auto fn = FastNoise::New<FastNoise::Perlin>();
-
-    std::cout << "Salut" << std::endl;
-    printf("HELLO CA FONCTIONNE !!\n");
-
-    return 0;
 }
