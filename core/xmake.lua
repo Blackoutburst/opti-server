@@ -7,7 +7,6 @@ if is_mode("release") then
 end
 
 target("server")
-    set_policy("build.sanitizer.address", true)
 
     set_kind("binary")
     -- add_cflags("-std=c23")
@@ -29,8 +28,13 @@ target("server")
     end
 
     if is_mode("debug") then
+        set_policy("build.sanitizer.address", true)
         add_cxflags("-g3", "-fno-omit-frame-pointer")
         -- add_defines("DEBUG")
+    end
+
+    if is_mode("release") then
+        set_policy("build.sanitizer.address", false)
     end
 
     after_build(function (target)
