@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "main.h"
+#include "utils/args.h"
 #include "utils/buffer.h"
 #include "utils/string.h"
 #include "utils/math.h"
@@ -266,7 +266,7 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     S04CLIENT_METADATA* packet = decodePacketClientMetadata(buffer);
     free(buffer);
 
-    U8 mRd = getServerMaxRenderDistance();
+    U8 mRd = argsGetRenderDistance();
     U8 newRenderDistance = packet->renderDistance > mRd ? mRd : packet->renderDistance;
 
     client->renderDistance = newRenderDistance;

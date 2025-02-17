@@ -3,6 +3,7 @@
 #include "database/database.h"
 #include "sqlite/sqlite3.h"
 #include "utils/logger.h"
+#include "utils/args.h"
 #include "world/world.h"
 
 static sqlite3* db = NULL;
@@ -185,9 +186,9 @@ void dbClean(void) {
 
 void dbInit(void) {
     if (db != NULL) return;
-    rc = sqlite3_open("sqlite.db", &db);
+    rc = sqlite3_open(argsGetDbType() == DB_FILE ? "sqlite.db" : ":memory:", &db);
     if (rc != SQLITE_OK) {
-        logE("Couldn't open [sqlite.db]");
+        logE("Couldn't open database");
         exit(1);
     }
 
@@ -198,7 +199,7 @@ void dbInit(void) {
     sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", NULL, NULL, NULL);
     sqlite3_exec(db, "PRAGMA temp_store = MEMORY;", NULL, NULL, NULL);
 
-    logI("Connected to local database [sqlite.db]");
+    logI("Connected to local database");
 
     dbCreateTables();
 }
