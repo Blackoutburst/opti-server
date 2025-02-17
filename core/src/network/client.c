@@ -5,6 +5,7 @@
 #include "utils/buffer.h"
 #include "utils/string.h"
 #include "utils/math.h"
+#include "utils/logger.h"
 #include "database/database.h"
 #include "network/client.h"
 #include "network/packet.h"
@@ -247,12 +248,12 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     U8* encodedName = encodeString(client->name, 64);
     U8* encodedMessage = encodeString(packet->message, 4096);
 
-    snprintf(message, 4096, "%s: %s", encodedName, encodedMessage);
+    snprintf((I8*)message, 4096, "%s: %s", encodedName, encodedMessage);
     free(encodedName);
     free(encodedMessage);
 
     memcpy(newPacket.message, message, 4096);
-    printf("%s\n", message);
+    logI("%s\n", message);
 
     U8* tempBuff = encodePacketChat(&newPacket);
 
@@ -279,7 +280,7 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
     memcpy(newPacket.name, encodedName, 64);
     free(encodedName);
 
-    printf("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
+    logI("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
     U8* tempBuff = encodePacketEntityMetadata(&newPacket);
 

@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include "utils/ioUtils.h"
 #include "world/chunk.h"
 
 #if defined(_WIN32) || defined(_WIN64)

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "utils/types.h"
+#include "utils/logger.h"
 #include "network/server.h"
 #include "database/database.h"
 
@@ -30,7 +31,7 @@ void updateRenderDistance(I8* arg) {
 
 I32 main(I32 argc, I8** argv) {
     if (argc > 1) updateRenderDistance(argv[1]);
-    printf("Starting server with a max render distance of: %i\n", renderDistance);
+    logI("Starting server with a max render distance of: %i", renderDistance);
 
     #if defined(_WIN32) || defined(_WIN64)
         loadLibraries();
@@ -40,6 +41,6 @@ I32 main(I32 argc, I8** argv) {
     serverInit();
     serverClean();
 
-    printf("Shutting down server\n");
+    logI("Shutting down server");
     return 0;
 }

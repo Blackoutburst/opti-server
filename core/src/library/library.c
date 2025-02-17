@@ -2,8 +2,9 @@
 #if defined(_WIN32) || defined(_WIN64)
     #include <stdio.h>
     #include "utils/string.h"
+    #include "utils/logger.h"
     #include "library/library.h"
-    
+
     const LIBRARY invalidLibrary = {NULL, 0, 0};
 
     LIBRARY libraryLoad(const I8* name) {
@@ -11,7 +12,7 @@
 
         lib.instanceLib = LoadLibrary(name);
         if (lib.instanceLib == NULL) {
-            printf("[Error]: Couldn't load library\n");
+            logE("Couldn't load library");
             return invalidLibrary;
         }
 
@@ -25,7 +26,7 @@
         void* func = GetProcAddress(lib->instanceLib, functionName);
 
         if (func == NULL) {
-            printf("[Error]: Loading function %s\n", functionName);
+            logE("Loading function %s", functionName);
         }
 
         return func;
@@ -35,7 +36,7 @@
         int r = FreeLibrary(lib->instanceLib);
 
         if (r == 0) {
-            printf("[Error]: Failed freeing library\n");
+            logE("Failed freeing library");
         }
     }
 #endif
