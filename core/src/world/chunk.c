@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include "utils/ioUtils.h"
 #include "world/chunk.h"
 
 static worldgen_genChunk func_genChunk = NULL;

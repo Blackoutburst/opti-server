@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include "database/database.h"
 #include "sqlite/sqlite3.h"
-#include "utils/ioUtils.h"
+#include "utils/logger.h"
+#include "utils/args.h"
 #include "world/world.h"
 
 static sqlite3* db = NULL;
@@ -14,7 +15,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
 
     const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-         println("Error preparing statement for dbGetChunksInRegion");
+         logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
          return;
     }
 
@@ -49,7 +50,7 @@ U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
     sqlite3_stmt* stmt;
     const I8* sql = "SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
      if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        println("SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?; fucked up");
+        logE("Failed to prepare statement for dbGetChunkBlocks error: %s", sqlite3_errmsg(db));
         return NULL;
      }
 
@@ -78,7 +79,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
     const I8* sql = "INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?);";
     I32 rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
-        printf("Failed to prepare bulk insert statement: %s\n", sqlite3_errmsg(db));
+        logE("Failed to prepare statement for dbAddChunks error: %s", sqlite3_errmsg(db));
         return;
     }
 
@@ -102,7 +103,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
 
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE) {
-            printf("Failed to insert chunk at (%i, %i, %i): %s\n", chunks[i]->position.x, chunks[i]->position.y, chunks[i]->position.z, sqlite3_errmsg(db));
+            logW("Failed to insert chunk at (%i, %i, %i): %s", chunks[i]->position.x, chunks[i]->position.y, chunks[i]->position.z, sqlite3_errmsg(db));
         }
 
         sqlite3_reset(stmt);
@@ -118,7 +119,7 @@ void dbAddChunk(CHUNK* chunk) {
     const I8* sql = "INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?);";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        println("INSERT OR REPLACE INTO chunks (x, y, z, blocks) VALUES (?, ?, ?, ?); fucked up");
+        logE("Failed to prepare statement for dbAddChunk error: %s", sqlite3_errmsg(db));
         return;
     }
 
@@ -136,7 +137,7 @@ void dbAddChunk(CHUNK* chunk) {
     sqlite3_bind_blob(stmt, 4, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        printf("Failed to insert chunk: %i, %i, %i\n", chunk->position.x, chunk->position.y, chunk->position.z);
+        logW("Failed to insert chunk at (%i, %i, %i): %s", chunk->position.x, chunk->position.y, chunk->position.z, sqlite3_errmsg(db));
     }
 
     sqlite3_finalize(stmt);
@@ -149,7 +150,7 @@ void _dbCreateWorldTable(void) {
     rc = sqlite3_exec(db, sql, NULL, 0, &errMsg);
 
     if (rc != SQLITE_OK) {
-        println("Couldn't create [world] table");
+        logE("Couldn't create [world] table");
         exit(1);
     }
 }
@@ -166,7 +167,7 @@ void _dbCreateChunkTable(void) {
     rc = sqlite3_exec(db, sql, NULL, 0, &errMsg);
 
     if (rc != SQLITE_OK) {
-        println("Couldn't create [chunks] table");
+        logE("Couldn't create [chunks] table");
         exit(1);
     }
 }
@@ -185,9 +186,9 @@ void dbClean(void) {
 
 void dbInit(void) {
     if (db != NULL) return;
-    rc = sqlite3_open("sqlite.db", &db);
+    rc = sqlite3_open(argsGetDbType() == DB_FILE ? "sqlite.db" : ":memory:", &db);
     if (rc != SQLITE_OK) {
-        println("Couldn't open [sqlite.db]");
+        logE("Couldn't open database");
         exit(1);
     }
 
@@ -198,7 +199,7 @@ void dbInit(void) {
     sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", NULL, NULL, NULL);
     sqlite3_exec(db, "PRAGMA temp_store = MEMORY;", NULL, NULL, NULL);
 
-    println("Connected to local database [sqlite.db]");
+    logI("Connected to local database");
 
     dbCreateTables();
 }

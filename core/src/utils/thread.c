@@ -1,15 +1,16 @@
 #include "utils/thread.h"
-#include "utils/ioUtils.h"
+#include "utils/logger.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     HANDLE startThread(DWORD WINAPI (*method)(LPVOID), void *arg) {
         HANDLE thread = CreateThread(NULL, 0, method, arg, 0, NULL);
 
         if (thread == NULL) {
-            println("Thread creation failed");
+            logW("Thread creation failed");
             return NULL;
         }
 
+        logT("Thread created successfully");
         return thread;
     }
 
@@ -21,10 +22,11 @@
         pthread_t thread;
 
         if (pthread_create(&thread, NULL, method, arg)) {
-            println("Thread creation failed");
+            logW("Thread creation failed");
             return 0;
         }
 
+        logT("Thread created successfully");
         return thread;
     }
 

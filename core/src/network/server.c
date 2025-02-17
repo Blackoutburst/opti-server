@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils/math.h"
-#include "utils/ioUtils.h"
+#include "utils/logger.h"
 #include "utils/string.h"
 #include "utils/mutex.h"
 #include "utils/thread.h"
@@ -28,7 +28,7 @@ static TCP_CLIENT** tcpClients = NULL;
 
 void serverStop(void) {
     running = 0;
-    printf("Stopping server\n");
+    logI("Stopping server");
 }
 
 U32 getClientId(void) {
@@ -43,7 +43,6 @@ U8 recvAll(TCP_CLIENT* client, U8* buffer, U32 size, U32 bufferOffset) {
         totalBytesRead += bytesRead;
 
         if (bytesRead <= 0) {
-            println("Data read failed");
             removeClient(client->id);
             return 0;
         }
@@ -118,7 +117,7 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
             break;
         }
 
-        printf("New client %i\n", client->id);
+        logI("New client %i\n", client->id);
 
         clientId++;
 
@@ -177,7 +176,7 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
             break;
         }
 
-        printf("New client %i\n", client->id);
+        logI("New client %i\n", client->id);
 
         clientId++;
 
@@ -234,7 +233,7 @@ void removeClient(U32 id) {
         }
     }
 
-    printf("Client %i removed\n", id);
+    logI("Client %i removed\n", id);
 
     mutexUnlock(&mutex);
 }
@@ -247,14 +246,13 @@ void removeClient(U32 id) {
         while (running && client->socket != INVALID_SOCKET) {
             I8 packetId = 0;
             if (recv(client->socket, &packetId, 1, 0) <= 0) {
-                println("Data read failed");
                 removeClient(client->id);
                 return 0;
             }
 
             U32 size = getServerPacketSize(packetId);
             if (size <= 0) {
-                printf("Invalid packet %i size: %i\n", packetId, size);
+                logW("Invalid packet %i size: %i\n", packetId, size);
                 removeClient(client->id);
                 return 0;
             }
@@ -296,13 +294,12 @@ void removeClient(U32 id) {
         while (running && client->socket >= 0) {
             I8 packetId = 0;
             if (recv(client->socket, &packetId, 1, 0) <= 0) {
-                println("Data read failed");
                 removeClient(client->id);
                 return NULL;
             }
             U32 size = getServerPacketSize(packetId);
             if (size <= 0) {
-                printf("Invalid packet %i size: %i\n", packetId, size);
+                logW("Invalid packet %i size: %i\n", packetId, size);
                 removeClient(client->id);
                 return NULL;
             }
@@ -403,7 +400,7 @@ void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
         clientLength = sizeof(clientAddress);
         clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
         if (clientSocket == INVALID_SOCKET) {
-            println("Client accept failed");
+            logW("Client accept failed");
             return;
         }
 
@@ -420,7 +417,7 @@ void serverWrite(TCP_CLIENT* client, U8* buffer, U32 size) {
         clientLength = sizeof(clientAddress);
         clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLength);
         if (clientSocket < 0) {
-            println("Client accept failed");
+            logW("Client accept failed");
             return;
         }
 
@@ -442,7 +439,7 @@ void serverAccept(void) {
 #if defined(_WIN32) || defined(_WIN64)
     void serverListenWIN(void) {
         if (listen(serverSocket, TCP_LISTENT_QUEUE_SIZE) == SOCKET_ERROR) {
-            println("Server listen failed");
+            logE("Server listen failed");
             serverClean();
             return;
         }
@@ -454,7 +451,7 @@ void serverAccept(void) {
 #else
     void serverListenPOSIX(void) {
         if (listen(serverSocket, TCP_LISTENT_QUEUE_SIZE) < 0) {
-            println("Server listen failed");
+            logE("Server listen failed");
             serverClean();
             return;
         }
@@ -467,7 +464,7 @@ void serverAccept(void) {
 
 void serverListen(void) {
     running = 1;
-    printf("Server listening on port [TCP:%i]\n", TCP_PORT);
+    logI("Server listening on port [TCP:%i]\n", TCP_PORT);
 
     #if defined(_WIN32) || defined(_WIN64)
         serverListenWIN();
@@ -523,13 +520,13 @@ void serverClean(void) {
         WSADATA wsaData;
 
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            println("WSAStartup failed");
+            logE("WSAStartup failed");
             exit(1);
         }
 
         serverSocket = socket(AF_INET, SOCK_STREAM, 0);
         if (serverSocket == INVALID_SOCKET) {
-            println("Server socket creation failed");
+            logE("Server socket creation failed");
             WSACleanup();
             exit(1);
         }
@@ -540,7 +537,7 @@ void serverClean(void) {
         serverAddress.sin_port = htons(TCP_PORT);
 
         if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
-            println("Server bind failed");
+            logE("Server bind failed");
             serverClean();
             return;
         }
@@ -553,7 +550,7 @@ void serverClean(void) {
 
         serverSocket = socket(AF_INET, SOCK_STREAM, 0);
         if (serverSocket < 0) {
-            println("Server socket creation failed");
+            logE("Server socket creation failed");
             exit(1);
         }
 
@@ -563,7 +560,7 @@ void serverClean(void) {
         serverAddress.sin_port = htons(TCP_PORT);
 
         if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-            println("Server bind failed");
+            logE("Server bind failed");
             serverClean();
             return;
         }
