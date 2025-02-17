@@ -31,9 +31,12 @@ void argsParse(I32 argc, I8** argv) {
 void argsHelp(void) {
     const I8* help = "\033[37m==============================================\033[0m\n"
                     "\033[91m[Minecraft Wish server]\033[0m\n\n"
-                    "\033[96m-h, --help\033[0m: Show this message\n"
-                    "\033[96m-r, --renderDistance\033[0m: \033[92m[1..255]\033[0m \033[93m(default: 2)\033[0m set the server maximum render distance\n"
-                    "\033[96m-d, --database\033[0m: \033[92m[\"file\" \"ram\"]\033[0m \033[93m(default: \"file\")\033[0m set the server database type\n"
+                    "\033[96m-h, --help\033[0m:\n"
+                    "\tShow this message\n\n"
+                    "\033[96m-r, --renderDistance\033[0m: \033[92m[1..255]\033[0m \033[93m(default: 2)\033[0m\n"
+                    "\tSet the server maximum render distance\n\n"
+                    "\033[96m-d, --database\033[0m: \033[92m[\"file\" \"ram\"]\033[0m \033[93m(default: \"file\")\033[0m\n"
+                    "\tSet the server database type\n\n"
                     "\033[37m==============================================\033[0m\n";
 
     printf("%s", help);
