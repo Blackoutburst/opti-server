@@ -52,7 +52,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         }
     }}}
 
-    logD("db.chunks: %d", (int)(size(&client->dbChunks)));
+    // logD("db.chunks: %d", (int)(size(&client->dbChunks)));
 
     sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
 
