@@ -34,7 +34,7 @@ struct tcpClient {
         pthread_t thread;
     #endif
     VECTORF position;
-    VECTORF chunkPosition;
+    VECTORI chunkPosition;
     F32 yaw;
     F32 pitch;
     map(U32, VECTORI) chunks;
