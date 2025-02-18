@@ -1,3 +1,5 @@
+#if defined(_WIN32) || defined(_WIN64)
+
 #include <windows.h>
 #include "utils/perfTimer.h"
 #include "utils/logger.h"
@@ -25,3 +27,5 @@ void perfTimerEnd(void) {
 
     logD("[TIMER] %s - %.4f ms", name, interval);
 }
+
+#endif
