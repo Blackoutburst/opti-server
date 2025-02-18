@@ -226,7 +226,6 @@ void removeClient(U32 id) {
             #endif
             cleanup(&tcpClients[i]->chunks);
             cleanup(&tcpClients[i]->dbChunks);
-            joinThread(tcpClients[i]->thread);
             free(tcpClients[i]);
             tcpClients[i] = NULL;
             break;
