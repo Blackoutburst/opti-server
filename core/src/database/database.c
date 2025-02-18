@@ -13,35 +13,48 @@ static I8* errMsg = NULL;
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
 
-    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
+    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-         logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
-         return;
+        logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
+        return;
     }
 
-    sqlite3_bind_int(stmt, 1, minX);
-    sqlite3_bind_int(stmt, 2, maxX);
-    sqlite3_bind_int(stmt, 3, minY);
-    sqlite3_bind_int(stmt, 4, maxY);
-    sqlite3_bind_int(stmt, 5, minZ);
-    sqlite3_bind_int(stmt, 6, maxZ);
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        I32 x = sqlite3_column_int(stmt, 0);
-        I32 y = sqlite3_column_int(stmt, 1);
-        I32 z = sqlite3_column_int(stmt, 2);
-        if (worldGetChunk(client, x, y, z)) continue;
+    for (I32 x = minX; x < maxX; x += CHUNK_SIZE) {
+    for (I32 y = minY; y < maxY; y += CHUNK_SIZE) {
+    for (I32 z = minZ; z < maxZ; z += CHUNK_SIZE) {
+        if (worldGetChunk(client, x, y, z) != 0) continue;
 
-        const U8* data = sqlite3_column_blob(stmt, 3);
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+
+        sqlite3_bind_int(stmt, 1, x);
+        sqlite3_bind_int(stmt, 2, y);
+        sqlite3_bind_int(stmt, 3, z);
+
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            I32 x = sqlite3_column_int(stmt, 0);
+            I32 y = sqlite3_column_int(stmt, 1);
+            I32 z = sqlite3_column_int(stmt, 2);
+            if (worldGetChunk(client, x, y, z)) continue;
+
+            const U8* data = sqlite3_column_blob(stmt, 3);
 
 
-        if (data) {
-            U8* blocks = malloc(CHUNK_BLOCK_COUNT);
-            memcpy(blocks, data, CHUNK_BLOCK_COUNT);
+            if (data) {
+                U8* blocks = malloc(CHUNK_BLOCK_COUNT);
+                memcpy(blocks, data, CHUNK_BLOCK_COUNT);
 
-            insert(&client->dbChunks, chunkHash(x, y, z), blocks);
+                insert(&client->dbChunks, chunkHash(x, y, z), blocks);
+            }
         }
-    }
+    }}}
+
+    logD("db.chunks: %d", (int)(size(&client->dbChunks)));
+
+    sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
 
     sqlite3_finalize(stmt);
 }
