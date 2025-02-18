@@ -5,35 +5,66 @@
 #include "utils/logger.h"
 #include "utils/args.h"
 #include "world/world.h"
+#include "utils/perfTimer.h"
 
 static sqlite3* db = NULL;
 static I32 rc = 0;
 static I8* errMsg = NULL;
 
-void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
-    sqlite3_stmt* stmt;
-
-    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-         logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
-         return;
+void dbGetChunksInRegion(TCP_CLIENT* client, const vec(VECTORI)* chunksToGet) {
+    const char *createTempTableSQL = "CREATE TEMP TABLE temp_points (dx INTEGER, dy INTEGER, dz INTEGER);";
+    if (sqlite3_exec(db, createTempTableSQL, 0, 0, NULL) != SQLITE_OK) {
+        logE("Failed to sqlite3_exec error: %s", sqlite3_errmsg(db));
+        return;
     }
 
-    sqlite3_bind_int(stmt, 1, minX);
-    sqlite3_bind_int(stmt, 2, maxX);
-    sqlite3_bind_int(stmt, 3, minY);
-    sqlite3_bind_int(stmt, 4, maxY);
-    sqlite3_bind_int(stmt, 5, minZ);
-    sqlite3_bind_int(stmt, 6, maxZ);
+    sqlite3_stmt *insertStmt;
+    const char *insertSQL = "INSERT INTO temp_points VALUES (?, ?, ?);";
+    if (sqlite3_prepare_v2(db, insertSQL, -1, &insertStmt, NULL) != SQLITE_OK) {
+        logE("sqlite3_prepare_v2: insertSQL");
+    }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        I32 x = sqlite3_column_int(stmt, 0);
-        I32 y = sqlite3_column_int(stmt, 1);
-        I32 z = sqlite3_column_int(stmt, 2);
-        if (worldGetChunk(client, x, y, z)) continue;
+    const I32 chunksToGetSize = size(chunksToGet);
+    logD("chunksToGetSize: %d", chunksToGetSize);
+    for (I32 i = 0 ; i < chunksToGetSize ; i++) {
+        VECTORI v = *get(chunksToGet, i);
 
-        const U8* data = sqlite3_column_blob(stmt, 3);
+        sqlite3_bind_int(insertStmt, (i*3)+0, v.x);
+        sqlite3_bind_int(insertStmt, (i*3)+1, v.y);
+        sqlite3_bind_int(insertStmt, (i*3)+2, v.z);
 
+        if (sqlite3_step(insertStmt) != SQLITE_DONE) {
+            // handle error
+            logE("sqlite3_step");
+        }
+        sqlite3_reset(insertStmt);
+    }
+
+    sqlite3_finalize(insertStmt);
+
+    perfTimerBegin("dbGetChunksInRegion");
+
+    sqlite3_stmt *selectStmt;
+    const char *selectSQL = "SELECT x, y, z, blocks FROM chunks LEFT JOIN temp_points ON x = dx AND y = dy AND z = dz;";
+
+    if (sqlite3_prepare_v2(db, selectSQL, -1, &selectStmt, NULL) != SQLITE_OK) {
+        logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
+    }
+
+    // if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+    //     logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
+    //     return;
+    // }
+
+    while (sqlite3_step(selectStmt) == SQLITE_ROW) {
+        I32 x = sqlite3_column_int(selectStmt, 0);
+        I32 y = sqlite3_column_int(selectStmt, 1);
+        I32 z = sqlite3_column_int(selectStmt, 2);
+        if (worldGetChunk(client, x, y, z)) {
+            continue;
+        }
+
+        const U8* data = sqlite3_column_blob(selectStmt, 3);
 
         if (data) {
             U8* blocks = malloc(CHUNK_BLOCK_COUNT);
@@ -43,7 +74,10 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         }
     }
 
-    sqlite3_finalize(stmt);
+    sqlite3_finalize(selectStmt);
+    perfTimerEnd();
+
+    sqlite3_exec(db, "DROP TABLE IF EXISTS temp_points;", NULL, NULL, NULL);
 }
 
 U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {

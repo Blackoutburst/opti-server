@@ -92,9 +92,9 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
         client->position.x = 0;
         client->position.y = 0;
         client->position.z = 0;
-        client->chunkPosition.x = 64;
-        client->chunkPosition.y = 64;
-        client->chunkPosition.z = 64;
+        client->chunkPosition.x = 8192;
+        client->chunkPosition.y = 8192;
+        client->chunkPosition.z = 8192;
         client->yaw = 0;
         client->pitch = 0;
         client->renderDistance = 2;
