@@ -13,7 +13,7 @@ static I8* errMsg = NULL;
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
 
-    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
+    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x <= ? AND y >= ? AND y <= ? AND z >= ? AND z <= ?;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
          logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
          return;
