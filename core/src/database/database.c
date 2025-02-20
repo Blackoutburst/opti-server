@@ -3,6 +3,7 @@
 #include "database/database.h"
 #include "sqlite/sqlite3.h"
 #include "utils/logger.h"
+#include "utils/perfTimer.h"
 #include "utils/args.h"
 #include "world/world.h"
 
@@ -11,9 +12,10 @@ static I32 rc = 0;
 static I8* errMsg = NULL;
 
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
+    perfTimerBegin("dbGetChunksInRegion");
     sqlite3_stmt* stmt;
 
-    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
+    const I8* sql = "SELECT blocks FROM chunks WHERE x = ? AND y = ? AND z = ?;";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
         logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
@@ -35,12 +37,12 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         sqlite3_bind_int(stmt, 3, z);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
-            I32 x = sqlite3_column_int(stmt, 0);
-            I32 y = sqlite3_column_int(stmt, 1);
-            I32 z = sqlite3_column_int(stmt, 2);
+            // I32 x = sqlite3_column_int(stmt, 0);
+            // I32 y = sqlite3_column_int(stmt, 1);
+            // I32 z = sqlite3_column_int(stmt, 2);
             if (worldGetChunk(client, x, y, z)) continue;
 
-            const U8* data = sqlite3_column_blob(stmt, 3);
+            const U8* data = sqlite3_column_blob(stmt, 0);
 
 
             if (data) {
@@ -52,11 +54,12 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         }
     }}}
 
-    // logD("db.chunks: %d", (int)(size(&client->dbChunks)));
+    logD("db.chunks: %d", (int)(size(&client->dbChunks)));
 
     sqlite3_exec(db, "END TRANSACTION;", NULL, NULL, NULL);
 
     sqlite3_finalize(stmt);
+    perfTimerEnd();
 }
 
 U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
@@ -170,12 +173,13 @@ void _dbCreateWorldTable(void) {
 
 void _dbCreateChunkTable(void) {
     const I8* sql = "CREATE TABLE IF NOT EXISTS chunks ("
-                  "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                //   "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                   "x INTEGER, "
                   "y INTEGER, "
                   "z INTEGER, "
                   "blocks BLOB, "
-                  "UNIQUE(x, y, z) ON CONFLICT REPLACE"
+                  "PRIMARY KEY (x, y, z)"
+                //   "UNIQUE(x, y, z) ON CONFLICT REPLACE"
                   ");";
     rc = sqlite3_exec(db, sql, NULL, 0, &errMsg);
 
