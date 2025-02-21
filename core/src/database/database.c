@@ -34,7 +34,6 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
 
         const U8* data = sqlite3_column_blob(stmt, 3);
 
-
         if (data) {
             U8* blocks = malloc(CHUNK_BLOCK_COUNT);
             memcpy(blocks, data, CHUNK_BLOCK_COUNT);

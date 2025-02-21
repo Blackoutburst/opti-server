@@ -6,6 +6,7 @@
 #include "utils/math.h"
 #include "database/database.h"
 #include "utils/logger.h"
+#include "utils/perfTimer.h"
 
 
 U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
@@ -99,6 +100,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     // logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
+    perfTimerBegin("dbGetChunksInRegions");
 
     if (bx != 0) {
         I32 minX = bx == 1 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
@@ -121,6 +123,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
+
+    // dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, newbbminZ, newbbmaxZ);
+
+    perfTimerEnd();
 
     logD("");
 
