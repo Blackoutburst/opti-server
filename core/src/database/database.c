@@ -13,7 +13,9 @@ static I8* errMsg = NULL;
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
 
-    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x <= ? AND y >= ? AND y <= ? AND z >= ? AND z <= ?;";
+    // NOTE: Fix different amount of chunks read when going toward negative vs positive X Y Z
+    const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x < ? AND y >= ? AND y < ? AND z >= ? AND z < ?;";
+    // const I8* sql = "SELECT x, y, z, blocks FROM chunks WHERE x >= ? AND x <= ? AND y >= ? AND y <= ? AND z >= ? AND z <= ?;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
          logE("Failed to prepare statement for dbGetChunksInRegion error: %s", sqlite3_errmsg(db));
          return;
@@ -26,12 +28,14 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
     sqlite3_bind_int(stmt, 5, minZ);
     sqlite3_bind_int(stmt, 6, maxZ);
 
+    int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         I32 x = sqlite3_column_int(stmt, 0);
         I32 y = sqlite3_column_int(stmt, 1);
         I32 z = sqlite3_column_int(stmt, 2);
         if (worldGetChunk(client, x, y, z)) continue;
 
+        count += 1;
         const U8* data = sqlite3_column_blob(stmt, 3);
 
         if (data) {
@@ -41,6 +45,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
             insert(&client->dbChunks, chunkHash(x, y, z), blocks);
         }
     }
+    logD("chunks reads: %d", count);
 
     sqlite3_finalize(stmt);
 }
