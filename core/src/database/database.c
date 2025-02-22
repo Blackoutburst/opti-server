@@ -19,6 +19,16 @@ CHUNKHASH getChunkHash(int x, int y, int z) {
     return (CHUNKHASH){.hash={x, y, z}};
 }
 
+U64 encode3int21(int x, int y, int z) {
+    #define OFFSET (0x1FFFFF / 2)
+
+    return (U64)(
+        ((U64)((x + OFFSET) & 0x1FFFFF))       |
+        ((U64)((y + OFFSET) & 0x1FFFFF)) << 21 |
+        ((U64)((z + OFFSET) & 0x1FFFFF)) << 42
+    );
+}
+
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
 
@@ -42,8 +52,10 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
         sqlite3_reset(stmt);
         sqlite3_clear_bindings(stmt); // can be commented
 
-        CHUNKHASH chunkhash = getChunkHash(x, y, z);
-        sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+        // CHUNKHASH chunkhash = getChunkHash(x, y, z);
+        // sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+        U64 hash = encode3int21(x / CHUNK_SIZE, y / CHUNK_SIZE, z / CHUNK_SIZE);
+        sqlite3_bind_int64(stmt, 1, hash);
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             count += 1;
@@ -113,8 +125,11 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
     sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
     for (U32 i = 0; i < count; i++) {
-        CHUNKHASH chunkhash = getChunkHash(chunks[i]->position.x, chunks[i]->position.y, chunks[i]->position.z);
-        sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+        // CHUNKHASH chunkhash = getChunkHash(chunks[i]->position.x, chunks[i]->position.y, chunks[i]->position.z);
+        // sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+
+        U64 hash = encode3int21(chunks[i]->position.x / CHUNK_SIZE, chunks[i]->position.y / CHUNK_SIZE, chunks[i]->position.z / CHUNK_SIZE);
+        sqlite3_bind_int64(stmt, 1, hash);
 
         sqlite3_bind_int(stmt, 2, chunks[i]->position.x);
         sqlite3_bind_int(stmt, 3, chunks[i]->position.y);
@@ -153,9 +168,12 @@ void dbAddChunk(CHUNK* chunk) {
         return;
     }
 
-    CHUNKHASH chunkhash = getChunkHash(chunk->position.x, chunk->position.y, chunk->position.z);
+    // CHUNKHASH chunkhash = getChunkHash(chunk->position.x, chunk->position.y, chunk->position.z);
+    U64 hash = encode3int21(chunk->position.x / CHUNK_SIZE, chunk->position.y / CHUNK_SIZE, chunk->position.z / CHUNK_SIZE);
 
-    sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+    // sqlite3_bind_blob(stmt, 1, chunkhash.hash, 3 * sizeof(I32), SQLITE_STATIC);
+    sqlite3_bind_int64(stmt, 1, hash);
+
     sqlite3_bind_int(stmt, 2, chunk->position.x);
     sqlite3_bind_int(stmt, 3, chunk->position.y);
     sqlite3_bind_int(stmt, 4, chunk->position.z);
@@ -190,7 +208,7 @@ void _dbCreateWorldTable(void) {
 
 void _dbCreateChunkTable(void) {
     const I8* sql = "CREATE TABLE IF NOT EXISTS chunks ("
-                  "hash BLOB PRIMARY KEY, "
+                  "hash INTEGER PRIMARY KEY, "
                   "x INTEGER, "
                   "y INTEGER, "
                   "z INTEGER, "

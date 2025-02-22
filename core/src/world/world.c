@@ -148,6 +148,8 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
 
+    bool generatedChunks = false;
+
     // Do not use <= or it will not match the above code
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
@@ -160,6 +162,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
         CHUNK* c = NULL;
         if (data == NULL) {
+            generatedChunks = true;
             c = chunkCreate(x, y, z);
             chunksToAdd[addIndex] = c;
             addIndex++;
@@ -191,6 +194,8 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
             chunkClean(c);
         }
     }}}
+
+    logW("generatedChunks");
 
     clear(&client->dbChunks);
 
