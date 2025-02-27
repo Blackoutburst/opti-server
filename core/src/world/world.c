@@ -9,11 +9,9 @@
 #include "utils/perfTimer.h"
 
 
-
 U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return 0;
 
-    // return (get(&client->chunks, chunkHash(x, y, z)) != NULL);
     return (get(&client->chunks, ((VECTORI){x, y, z})) != NULL);
 }
 
@@ -23,14 +21,12 @@ void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     if (worldGetChunk(client, chunk->position.x, chunk->position.y, chunk->position.z)) return;
 
     VECTORI elem = { chunk->position.x, chunk->position.y, chunk->position.z };
-    // insert(&client->chunks, chunkHash(chunk->position.x, chunk->position.y, chunk->position.z), elem);
     insert(&client->chunks, chunk->position, elem);
 }
 
 void worldUnloadChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
     if (client == NULL) return;
 
-    // erase(&client->chunks, chunkHash(x, y, z));
     erase(&client->chunks, ((VECTORI){x, y, z}));
 }
 
@@ -43,7 +39,6 @@ void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client) {
     I32 rd = client->renderDistance * CHUNK_SIZE;
 
     size_t count = size(&client->chunks);
-    // U32* keysToRemove = malloc(sizeof(U32) * count);
     VECTORI* keysToRemove = malloc(sizeof(VECTORI) * count);
     size_t removeCount = 0;
 
@@ -96,15 +91,15 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 by = a_dy / 16;
     I32 bz = a_dz / 16;
 
-    logD("%d %d %d", bx, by, bz);
+    // logD("%d %d %d", bx, by, bz);
 
     // logD("p: %d %d %d", px, py, pz);
     // logD("chunkPosition: %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("a_d: %d %d %d", a_dx, a_dy, a_dz);
 
-    logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
-    logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
-    logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
+    // logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
+    // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
+    // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
     // perfTimerBegin("dbGetChunksInRegions");
 
     if (bx != 0) {
@@ -157,7 +152,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
-        // U8** data = get(&client->dbChunks, chunkHash(x, y, z));
         U8** data = get(&client->dbChunks, ((VECTORI){x, y, z}));
         if (y < -32 || worldGetChunk(client, x, y, z)) {
 
