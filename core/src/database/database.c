@@ -15,11 +15,11 @@ struct chunkhash {
     int hash[3];
 };
 
-CHUNKHASH getChunkHash(int x, int y, int z) {
-    return (CHUNKHASH){.hash={x, y, z}};
-}
+// CHUNKHASH getChunkHash(I32 x, I32 y, I32 z) {
+//     return (CHUNKHASH){.hash={x, y, z}};
+// }
 
-U64 encode3int21(int x, int y, int z) {
+U64 encode3int21(I32 x, I32 y, I32 z) {
     #define OFFSET (0x1FFFFF / 2)
 
     return (U64)(

@@ -106,10 +106,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         I32 minX = bx == 1 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
         I32 maxX = bx == 1 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
 
-        logD("minX: %d, maxX: %d - %d", minX, maxX, maxX - minX);
+        // logD("minX: %d, maxX: %d - %d", minX, maxX, maxX - minX);
 
-        int volume = (maxX - minX) * (newbbmaxY - newbbminY) * (newbbmaxZ - newbbminZ);
-        logD("Volume X: %d", volume / 4096);
+        // int volume = (maxX - minX) * (newbbmaxY - newbbminY) * (newbbmaxZ - newbbminZ);
+        // logD("Volume X: %d", volume / 4096);
 
         dbGetChunksInRegion(client, minX, maxX, newbbminY, newbbmaxY, newbbminZ, newbbmaxZ);
     }
@@ -118,10 +118,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         I32 minY = by == 1 ? MAX(newbbminY, oldbbmaxY) : MIN(newbbminY, oldbbminY);
         I32 maxY = by == 1 ? MAX(newbbmaxY, oldbbmaxY) : MIN(newbbmaxY, oldbbminY);
 
-        logD("minY: %d, maxY: %d - %d", minY, maxY, maxY - minY);
+        // logD("minY: %d, maxY: %d - %d", minY, maxY, maxY - minY);
 
-        int volume = (newbbmaxX - newbbminX) * (maxY - minY) * (newbbmaxZ - newbbminZ);
-        logD("Volume Y: %d", volume / 4096);
+        // int volume = (newbbmaxX - newbbminX) * (maxY - minY) * (newbbmaxZ - newbbminZ);
+        // logD("Volume Y: %d", volume / 4096);
 
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, minY, maxY, newbbminZ, newbbmaxZ);
     }
@@ -131,10 +131,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         I32 minZ = bz == 1 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
         I32 maxZ = bz == 1 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
 
-        logD("minZ: %d, maxZ: %d - %d", minZ, maxZ, maxZ - minZ);
+        // logD("minZ: %d, maxZ: %d - %d", minZ, maxZ, maxZ - minZ);
 
-        int volume = (newbbmaxX - newbbminX) * (newbbmaxY - newbbminY) * (maxZ - minZ);
-        logD("Volume Z: %d", volume / 4096);
+        // int volume = (newbbmaxX - newbbminX) * (newbbmaxY - newbbminY) * (maxZ - minZ);
+        // logD("Volume Z: %d", volume / 4096);
 
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
@@ -195,7 +195,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         }
     }}}
 
-    logW("generatedChunks");
+    if (generatedChunks) logW("generatedChunks");
 
     clear(&client->dbChunks);
 
