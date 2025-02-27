@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("c23", "c++20")
+set_languages("clatest", "c++20")
 
 if is_mode("release") then
     set_optimize("fastest")
@@ -21,6 +21,7 @@ target("server")
     if is_host("linux") then
         add_cxflags("-Wno-tautological-compare")
         add_ldflags("-pthread")
+        add_defines("_POSIX_C_SOURCE=199309L") -- for getting time.h feature CLOCK_PROCESS_CPUTIME_ID
     end
 
     if is_mode("release") then

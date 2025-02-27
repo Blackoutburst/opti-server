@@ -1,8 +1,9 @@
+#include "utils/perfTimer.h"
+#include "utils/logger.h"
+
 #if defined(_WIN32) || defined(_WIN64)
 
 #include <windows.h>
-#include "utils/perfTimer.h"
-#include "utils/logger.h"
 
 // #include <threads.h>
 // thread_local
@@ -26,6 +27,27 @@ void perfTimerEnd(void) {
     interval *= 1000.0; // convert to milliseconds
 
     logD("[TIMER] %s - %.4f ms", name, interval);
+}
+
+#else
+
+#include <time.h>
+#include <string.h>
+
+struct timespec start_time;
+I8 name[128] = {0};
+
+void perfTimerBegin(const I8* _name) {
+    strcpy(name, _name);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start_time);
+}
+
+void perfTimerEnd(void) {
+    struct timespec end_time;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end_time);
+    I64 diffInNanos = (end_time.tv_sec - start_time.tv_sec) * (I64)1e9 + (end_time.tv_nsec - start_time.tv_nsec);
+
+    logD("[TIMER] %s - %.4f ms", name, (double)diffInNanos / 1e6);
 }
 
 #endif

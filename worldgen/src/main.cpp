@@ -6,7 +6,7 @@
 
 #include "FastNoise/FastNoise.h"
 
-#define GLM_SWIZZLE
+#define GLM_FORCE_SWIZZLE
 #include "glm/glm.hpp"
 
 #include "main.h"

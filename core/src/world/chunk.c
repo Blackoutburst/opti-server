@@ -1,16 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "world/chunk.h"
+#include "library/library.h"
 
 static worldgen_genChunk func_genChunk = NULL;
 
-#if defined(_WIN32) || defined(_WIN64)
-    #include "library/library.h"
-
-    void chunkSetGenChunkFunction(worldgen_genChunk func) {
-        func_genChunk = func;
-    }
-#endif
+void chunkSetGenChunkFunction(worldgen_genChunk func) {
+    func_genChunk = func;
+}
 
 U8* chunkGenerate(I32 x, I32 y, I32 z) {
     U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);

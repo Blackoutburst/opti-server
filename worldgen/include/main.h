@@ -2,10 +2,18 @@
 
 #include <stdint.h>
 
-#ifdef MYLIB_EXPORTS
-#define MYLIB_API __declspec(dllexport)
+#if defined(_WIN32) || defined(_WIN64)
+
+    #ifdef MYLIB_EXPORTS
+    #define MYLIB_API __declspec(dllexport)
+    #else
+    #define MYLIB_API __declspec(dllimport)
+    #endif
+
 #else
-#define MYLIB_API __declspec(dllimport)
+
+#define MYLIB_API
+
 #endif
 
 
