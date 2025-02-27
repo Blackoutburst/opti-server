@@ -67,8 +67,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 pz = TO_CHUNK_POS((I32)client->position.z);
     I32 rd = ((I32)client->renderDistance) * CHUNK_SIZE;
 
-    logD("chunkPosition %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
-
     I32 oldbbminX = client->chunkPosition.x - rd;
     I32 oldbbmaxX = client->chunkPosition.x + rd;
     I32 oldbbminY = client->chunkPosition.y - rd;
@@ -91,8 +89,8 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 by = a_dy / 16;
     I32 bz = a_dz / 16;
 
+    // logD("chunkPosition %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("%d %d %d", bx, by, bz);
-
     // logD("p: %d %d %d", px, py, pz);
     // logD("chunkPosition: %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("a_d: %d %d %d", a_dx, a_dy, a_dz);
@@ -139,11 +137,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
 
-    // dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, newbbminZ, newbbmaxZ);
-
     // perfTimerEnd();
-
-    logD("");
 
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
