@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("c23", "c++20")
+set_languages("clatest", "c++20")
 
 if is_mode("release") then
     set_optimize("fastest")

@@ -3,6 +3,9 @@
 #include "utils/types.h"
 #include "utils/vector.h"
 #include "world/chunk.h"
+
+#define CC_CMPR VECTORI, { return (val_1.x == val_2.x && val_1.y == val_2.y && val_1.z == val_2.z) ? 0 : -1; }
+#define CC_HASH VECTORI, { return chunkHash(val.x, val.y, val.z); }
 #include "cc/cc.h"
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -37,8 +40,10 @@ struct tcpClient {
     VECTORI chunkPosition;
     F32 yaw;
     F32 pitch;
-    map(U32, VECTORI) chunks;
-    map(U32, U8*) dbChunks;
+    // map(U32, VECTORI) chunks;
+    // map(U32, U8*) dbChunks;
+    map(VECTORI, VECTORI) chunks;
+    map(VECTORI, U8*) dbChunks;
     U8 renderDistance;
     U8 name[64];
 };

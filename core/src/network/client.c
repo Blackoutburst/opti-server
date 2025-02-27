@@ -136,7 +136,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
     U32 blockCount = packet->blockCount;
     BLOCK_BULK_EDIT* blocks = packet->blocks;
 
-    map(U32, CHUNK*) editedChunks;
+    // map(U32, CHUNK*) editedChunks;
+    map(VECTORI, CHUNK*) editedChunks;
     init(&editedChunks);
 
     for (U32 i = 0; i < blockCount; i++) {
@@ -150,7 +151,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         I32 cy = TO_CHUNK_POS(y);
         I32 cz = TO_CHUNK_POS(z);
 
-        CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
+        // CHUNK** oldChunk = get(&editedChunks, chunkHash(cx, cy, cz));
+        CHUNK** oldChunk = get(&editedChunks, ((VECTORI){cx, cy, cz}));
         if (oldChunk != NULL) chunk = *oldChunk;
 
         if (chunk == NULL) {
@@ -175,7 +177,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
 
         chunk->monotype = chunkIsMonotype(chunk);
 
-        if (oldChunk == NULL) insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
+        // if (oldChunk == NULL) insert(&editedChunks, chunkHash(cx, cy, cz), chunk);
+        if (oldChunk == NULL) insert(&editedChunks, ((VECTORI){cx, cy, cz}), chunk);
     }
 
     TCP_CLIENT** tcpClients = getAllClients();

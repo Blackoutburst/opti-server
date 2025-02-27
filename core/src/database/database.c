@@ -72,7 +72,8 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
                 U8* blocks = malloc(CHUNK_BLOCK_COUNT);
                 memcpy(blocks, data, CHUNK_BLOCK_COUNT);
 
-                insert(&client->dbChunks, chunkHash(x, y, z), blocks);
+                insert(&client->dbChunks, ((VECTORI){x, y, z}), blocks);
+                // insert(&client->dbChunks, chunkHash(x, y, z), blocks);
             }
         }
     }}}
