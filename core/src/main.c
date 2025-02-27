@@ -7,26 +7,26 @@
 #include "database/database.h"
 #include "utils/args.h"
 
+#include "library/library.h"
+
+void loadLibraries(void) {
 #if defined(_WIN32) || defined(_WIN64)
-    #include "library/library.h"
+    const char* worldgenLibPath = "./worldgen.dll";
+#else
+    const char* worldgenLibPath = "./worldgen.so";
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
-    void loadLibraries(void) {
-        LIBRARY lib_worldgen = libraryLoad("worldgen.dll");
+    LIBRARY lib_worldgen = libraryLoad(worldgenLibPath);
 
-        chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
-        // libraryFree(&lib_worldgen);
-    }
-#endif
+    chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
+    // libraryFree(&lib_worldgen);
+}
 
 I32 main(I32 argc, I8** argv) {
     if (argc > 1) argsParse(argc, argv);
     logI("Starting server with a max render distance of: %i, database type: %s", argsGetRenderDistance(), argsGetDbType() == DB_FILE ? "file" : "ram");
 
-    #if defined(_WIN32) || defined(_WIN64)
-        loadLibraries();
-    #endif
+    loadLibraries();
 
     dbInit();
     serverInit();

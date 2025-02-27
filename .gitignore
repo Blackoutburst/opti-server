@@ -16,3 +16,4 @@ server.out
 **/build/
 .xmake
 *.dll
+*.so

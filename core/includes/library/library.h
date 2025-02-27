@@ -1,17 +1,29 @@
 #pragma once
 
+#include "utils/types.h"
+
+typedef struct library LIBRARY;
+
 #if defined(_WIN32) || defined(_WIN64)
-    #include <windows.h>
-    #include "utils/types.h"
 
-    typedef struct library LIBRARY;
-    struct library {
-        HINSTANCE instanceLib;
-        I8* name;
-        U8 isValid;
-    };
+#include <windows.h>
 
-    LIBRARY libraryLoad(const I8* name);
-    void libraryFree(const LIBRARY* dll);
-    void* libraryGet(const LIBRARY* lib, const I8* functionName);
+struct library {
+    HINSTANCE handle;
+    I8* name;
+    U8 isValid;
+};
+
+#else
+
+struct library {
+    void* handle;
+    I8* name;
+    U8 isValid;
+};
+
 #endif
+
+LIBRARY libraryLoad(const I8* name);
+void libraryFree(LIBRARY* dll);
+void* libraryGet(const LIBRARY* lib, const I8* functionName);
