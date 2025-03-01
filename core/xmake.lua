@@ -25,7 +25,7 @@ target("server")
     end
 
     if is_mode("release") then
-        add_cxflags("-O3")
+        set_optimize("fastest")
     end
 
     if is_mode("debug") then
