@@ -98,7 +98,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     // logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
-    // perfTimerBegin("dbGetChunksInRegions");
+    perfTimerBegin("dbGetChunksInRegions");
 
     if (bx != 0) {
         I32 minX = bx == 1 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
@@ -137,7 +137,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
 
-    // perfTimerEnd();
+    perfTimerEnd();
 
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
