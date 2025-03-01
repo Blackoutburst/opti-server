@@ -85,9 +85,9 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 a_dy = (py - client->chunkPosition.y);
     I32 a_dz = (pz - client->chunkPosition.z);
 
-    I32 bx = a_dx / 16;
-    I32 by = a_dy / 16;
-    I32 bz = a_dz / 16;
+    I32 bx = a_dx;// / 16;
+    I32 by = a_dy;// / 16;
+    I32 bz = a_dz;// / 16;
 
     // logD("chunkPosition %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("%d %d %d", bx, by, bz);
@@ -98,14 +98,14 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     // logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
+
     // perfTimerBegin("dbGetChunksInRegions");
 
     if (bx != 0) {
-        I32 minX = bx == 1 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
-        I32 maxX = bx == 1 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
+        I32 minX = bx > 0 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
+        I32 maxX = bx > 0 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
 
         // logD("minX: %d, maxX: %d - %d", minX, maxX, maxX - minX);
-
         // int volume = (maxX - minX) * (newbbmaxY - newbbminY) * (newbbmaxZ - newbbminZ);
         // logD("Volume X: %d", volume / 4096);
 
@@ -113,11 +113,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     }
 
     if (by != 0) {
-        I32 minY = by == 1 ? MAX(newbbminY, oldbbmaxY) : MIN(newbbminY, oldbbminY);
-        I32 maxY = by == 1 ? MAX(newbbmaxY, oldbbmaxY) : MIN(newbbmaxY, oldbbminY);
+        I32 minY = by > 0 ? MAX(newbbminY, oldbbmaxY) : MIN(newbbminY, oldbbminY);
+        I32 maxY = by > 0 ? MAX(newbbmaxY, oldbbmaxY) : MIN(newbbmaxY, oldbbminY);
 
         // logD("minY: %d, maxY: %d - %d", minY, maxY, maxY - minY);
-
         // int volume = (newbbmaxX - newbbminX) * (maxY - minY) * (newbbmaxZ - newbbminZ);
         // logD("Volume Y: %d", volume / 4096);
 
@@ -126,11 +125,10 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
     // BUG ??: Z axis seems to be 2~3x slower than X axis and Y axis
     if (bz != 0) {
-        I32 minZ = bz == 1 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
-        I32 maxZ = bz == 1 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
+        I32 minZ = bz > 0 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
+        I32 maxZ = bz > 0 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
 
         // logD("minZ: %d, maxZ: %d - %d", minZ, maxZ, maxZ - minZ);
-
         // int volume = (newbbmaxX - newbbminX) * (newbbmaxY - newbbminY) * (maxZ - minZ);
         // logD("Volume Z: %d", volume / 4096);
 
