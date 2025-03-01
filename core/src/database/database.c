@@ -176,7 +176,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
             *((RLE_VALUE_TYPE*)&(blocksStr[RLE_COUNT_SIZE])) = chunks[i]->blocks[0];
             compressedSize = RLE_SIZE;
         } else {
-            compressedSize = rleCompression(blocksStr, chunks[i]->blocks, chunks[i]->monotype ? 1 : CHUNK_BLOCK_COUNT);
+            compressedSize = rleCompression(blocksStr, chunks[i]->blocks, CHUNK_BLOCK_COUNT);
         }
 
         // if (chunks[i]->monotype) {
@@ -229,7 +229,7 @@ void dbAddChunk(CHUNK* chunk) {
         *((RLE_VALUE_TYPE*)&(blocksStr[RLE_COUNT_SIZE])) = chunk->blocks[0];
         compressedSize = RLE_SIZE;
     } else {
-        compressedSize = rleCompression(blocksStr, chunk->blocks, chunk->monotype ? 1 : CHUNK_BLOCK_COUNT);
+        compressedSize = rleCompression(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
     }
 
     // I32 compressedSize = rleCompression(blocksStr, chunk->blocks, chunk->monotype ? 1 : CHUNK_BLOCK_COUNT);
