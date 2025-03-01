@@ -23,6 +23,24 @@ U64 encode3int21(I32 x, I32 y, I32 z) {
     );
 }
 
+static void printBufferUint(const char *title, const uint8_t *buf, size_t buf_len)
+{
+    printf("%s [ ", title);
+    for (size_t i = 0 ; i < buf_len ; ++i) {
+        printf("%u ", buf[i]);
+    }
+    printf("]\n");
+}
+
+static void printBufferHex(const char *title, const unsigned char *buf, size_t buf_len)
+{
+    printf("%s [ ", title);
+    for (size_t i = 0 ; i < buf_len ; ++i) {
+        printf("%02X%s", buf[i], ( i + 1 ) % 16 == 0 ? "\r\n" : " " );
+    }
+    printf("]\n");
+}
+
 void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 maxY, I32 minZ, I32 maxZ) {
     sqlite3_stmt* stmt;
 
@@ -111,7 +129,7 @@ U8* dbGetChunkBlocks(I32 x, I32 y, I32 z) {
             logE("uncompressed size is %d instead of %d", uncompressedSize, CHUNK_BLOCK_COUNT);
         }
 
-        memcpy(blocks, data, CHUNK_BLOCK_COUNT);
+        // memcpy(blocks, data, CHUNK_BLOCK_COUNT);
     }
 
     sqlite3_finalize(stmt);
@@ -132,7 +150,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
 
     sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
-    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE]; // MAX VALUE ENCODING COULD TAKE IN WORST CASE
+    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE * 4]; // MAX VALUE ENCODING COULD TAKE IN WORST CASE
 
     for (U32 i = 0; i < count; i++) {
         U64 hash = encode3int21(chunks[i]->position.x / CHUNK_SIZE, chunks[i]->position.y / CHUNK_SIZE, chunks[i]->position.z / CHUNK_SIZE);
@@ -150,7 +168,20 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
         // } else {
         //     memcpy(blocksStr, chunks[i]->blocks, CHUNK_BLOCK_COUNT);
         // }
-        I32 compressedSize = rleCompression(blocksStr, chunks[i]->blocks, CHUNK_BLOCK_COUNT);
+
+
+        I32 compressedSize = -1;
+        if (chunks[i]->monotype) {
+            *((RLE_COUNT_TYPE*)&(blocksStr[0])) = CHUNK_BLOCK_COUNT;
+            *((RLE_VALUE_TYPE*)&(blocksStr[RLE_COUNT_SIZE])) = chunks[i]->blocks[0];
+            compressedSize = RLE_SIZE;
+        } else {
+            compressedSize = rleCompression(blocksStr, chunks[i]->blocks, chunks[i]->monotype ? 1 : CHUNK_BLOCK_COUNT);
+        }
+
+        // if (chunks[i]->monotype) {
+        //     printBufferUint("blocksStr", blocksStr, 3);
+        // }
 
         sqlite3_bind_blob(stmt, 5, blocksStr, compressedSize, SQLITE_STATIC);
         // sqlite3_bind_blob(stmt, 5, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
@@ -185,14 +216,26 @@ void dbAddChunk(CHUNK* chunk) {
     sqlite3_bind_int(stmt, 3, chunk->position.y);
     sqlite3_bind_int(stmt, 4, chunk->position.z);
 
-    I8 blocksStr[CHUNK_BLOCK_COUNT] = {0};
+    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE * 4] = {0};
+    // if (chunk->monotype) {
+    //     for (I32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocksStr[i] = chunk->blocks[0];
+    // } else {
+    //     memcpy(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
+    // }
+
+    I32 compressedSize = -1;
     if (chunk->monotype) {
-        for (I32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocksStr[i] = chunk->blocks[0];
+        *((RLE_COUNT_TYPE*)&(blocksStr[0])) = CHUNK_BLOCK_COUNT;
+        *((RLE_VALUE_TYPE*)&(blocksStr[RLE_COUNT_SIZE])) = chunk->blocks[0];
+        compressedSize = RLE_SIZE;
     } else {
-        memcpy(blocksStr, chunk->blocks, CHUNK_BLOCK_COUNT);
+        compressedSize = rleCompression(blocksStr, chunk->blocks, chunk->monotype ? 1 : CHUNK_BLOCK_COUNT);
     }
 
-    sqlite3_bind_blob(stmt, 5, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
+    // I32 compressedSize = rleCompression(blocksStr, chunk->blocks, chunk->monotype ? 1 : CHUNK_BLOCK_COUNT);
+
+    sqlite3_bind_blob(stmt, 5, blocksStr, compressedSize, SQLITE_STATIC);
+    // sqlite3_bind_blob(stmt, 5, blocksStr, CHUNK_BLOCK_COUNT, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         logW("Failed to insert chunk at (%i, %i, %i): %s", chunk->position.x, chunk->position.y, chunk->position.z, sqlite3_errmsg(db));
