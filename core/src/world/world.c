@@ -18,8 +18,6 @@ U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
 void worldAddChunk(TCP_CLIENT* client, CHUNK* chunk) {
     if (client == NULL) return;
 
-    if (worldGetChunk(client, chunk->position.x, chunk->position.y, chunk->position.z)) return;
-
     VECTORI elem = { chunk->position.x, chunk->position.y, chunk->position.z };
     insert(&client->chunks, chunk->position, elem);
 }
