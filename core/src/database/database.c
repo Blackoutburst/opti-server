@@ -150,7 +150,7 @@ void dbAddChunks(CHUNK** chunks, U32 count) {
 
     sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
-    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE * 4]; // MAX VALUE ENCODING COULD TAKE IN WORST CASE
+    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE]; // MAX VALUE ENCODING COULD TAKE IN WORST CASE
 
     for (U32 i = 0; i < count; i++) {
         U64 hash = encode3int21(chunks[i]->position.x / CHUNK_SIZE, chunks[i]->position.y / CHUNK_SIZE, chunks[i]->position.z / CHUNK_SIZE);
@@ -216,7 +216,7 @@ void dbAddChunk(CHUNK* chunk) {
     sqlite3_bind_int(stmt, 3, chunk->position.y);
     sqlite3_bind_int(stmt, 4, chunk->position.z);
 
-    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE * 4] = {0};
+    U8 blocksStr[CHUNK_BLOCK_COUNT * RLE_SIZE] = {0};
     // if (chunk->monotype) {
     //     for (I32 i = 0; i < CHUNK_BLOCK_COUNT; i++) blocksStr[i] = chunk->blocks[0];
     // } else {
