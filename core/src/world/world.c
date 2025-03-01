@@ -135,7 +135,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
 
-    perfTimerEnd();
+    // perfTimerEnd();
 
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
