@@ -33,7 +33,7 @@
 
 // if ( de(glm::vec3(world_x, world_y - 200, world_z) * 0.01f) < 0.005f) {
 float de(glm::vec3 p) {
-    constexpr float SCALE = 0.002f;
+    constexpr float SCALE = 0.0025f;
 
     if (!(p.x > -1.0f/SCALE && p.x > -1.0f/SCALE && p.y < 0.6f/SCALE && p.y < 0.8f/SCALE && p.z > -0.62f/SCALE && p.z < 1.2f/SCALE)) return 1.0f;
     p *= SCALE;
@@ -77,7 +77,7 @@ void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
         int world_y = y + dy;
         int world_z = z + dz;
 
-        // if ( de(glm::vec3(world_x, world_y - 220, world_z)) < 0.005f) {
+        // if ( de(glm::vec3(world_x, world_y - 450, world_z)) < 0.005f) {
         //     blocks[i] = 3;
         //     continue;
         // }
