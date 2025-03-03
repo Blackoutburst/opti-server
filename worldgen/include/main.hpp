@@ -12,7 +12,7 @@
 
 #else
 
-#define MYLIB_API
+    #define MYLIB_API
 
 #endif
 
