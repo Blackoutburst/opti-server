@@ -54,13 +54,14 @@ const uint8_t tree[] = {
 
 #define IS_INSIDE_CHUNK(x, y, z) ((x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE))
 
+static FastNoise::SmartNode<FastNoise::Perlin> fn;// = FastNoise::New<FastNoise::Perlin>();
 
-void generateStage1(uint8_t* blocks, int32_t x, int32_t y, int32_t z)
+static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
 {
-    auto fn = FastNoise::New<FastNoise::Perlin>();
+    // auto fn = FastNoise::New<FastNoise::Perlin>();
 
     float hmap[16*16];
-    fn->GenUniformGrid2D(hmap, x, z, 16, 16, 0.01f, 0);
+    fn->GenUniformGrid2D(hmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -68,9 +69,10 @@ void generateStage1(uint8_t* blocks, int32_t x, int32_t y, int32_t z)
         int i = dz * CHUNK_SIZE*CHUNK_SIZE + dy * CHUNK_SIZE + dx;
         int iXZ = dz * CHUNK_SIZE + dx;
 
-        int world_x = x + dx;
-        int world_y = y + dy;
-        int world_z = z + dz;
+        glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
+        // int world_x = x + dx;
+        // int world_y = y + dy;
+        // int world_z = z + dz;
 
         // if ( de(glm::vec3(world_x, world_y - 450, world_z)) < 0.005f) {
         //     blocks[i] = 3;
@@ -79,7 +81,7 @@ void generateStage1(uint8_t* blocks, int32_t x, int32_t y, int32_t z)
 
         float height = (2 + hmap[iXZ]) * 30.0f;
 
-        if (world_y >= height) {
+        if (blockWorldPosition.y >= height) {
             blocks[i] = 0;
         } else {
             blocks[i] = 1;
@@ -89,8 +91,8 @@ void generateStage1(uint8_t* blocks, int32_t x, int32_t y, int32_t z)
 
 
 // xyz -> chunk world position
-glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
-    const int32_t TREE_X = 0;// (CHUNK_SIZE / 2);
+static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    const int32_t TREE_X =  0;// (CHUNK_SIZE / 2);
     const int32_t TREE_Z = 0;//(CHUNK_SIZE / 2);
     const int32_t TREE_BOTTOM_CENTER_X = 2;//(CHUNK_SIZE / 2);
     const int32_t TREE_BOTTOM_CENTER_Z = 2;//(CHUNK_SIZE / 2);
@@ -99,13 +101,16 @@ glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, int32_t x, int32_t y, int32_t z) 
         int prev_index = (TREE_Z+TREE_BOTTOM_CENTER_Z) * CHUNK_SIZE*CHUNK_SIZE + (dy+1)*CHUNK_SIZE + (TREE_X+TREE_BOTTOM_CENTER_X);
         int index      = (TREE_Z+TREE_BOTTOM_CENTER_Z) * CHUNK_SIZE*CHUNK_SIZE +  dy*CHUNK_SIZE    + (TREE_X+TREE_BOTTOM_CENTER_X);
 
-        if (blocks[index] > 0 && blocks[prev_index] == 0) {
-            return {TREE_BOTTOM_CENTER_X, dy + 1, TREE_BOTTOM_CENTER_Z};
+        // can only grow on grass
+        if (blocks[index] == 1 && blocks[prev_index] == 0) {
+            return {TREE_X, dy + 1, TREE_Z};
         }
     }
+
+    return {-1, -1, -1};
 }
 
-void placeTree(uint8_t* blocks, int32_t origin_x, int32_t origin_y, int32_t origin_z) {
+static void placeTree(uint8_t* blocks, glm::ivec3 localPos) {
     for (int32_t dz = 0 ; dz < TREE_Z_SIZE ; ++dz) {
     for (int32_t dy = 0 ; dy < TREE_Y_SIZE ; ++dy) {
     for (int32_t dx = 0 ; dx < TREE_X_SIZE ; ++dx) {
@@ -114,9 +119,9 @@ void placeTree(uint8_t* blocks, int32_t origin_x, int32_t origin_y, int32_t orig
 
         if (value == 0) continue;
 
-        int32_t x = origin_x + dx;
-        int32_t y = origin_y + dy;
-        int32_t z = origin_z + dz;
+        int32_t x = localPos.x + dx;
+        int32_t y = localPos.y + dy;
+        int32_t z = localPos.z + dz;
 
         if (!IS_INSIDE_CHUNK(x, y, z)) continue;
 
@@ -125,39 +130,53 @@ void placeTree(uint8_t* blocks, int32_t origin_x, int32_t origin_y, int32_t orig
     }}}
 }
 
-void generateTrees(uint8_t* blocks, int chunk_offset_x, int chunk_offset_y, int chunk_offset_z) {
-    for (int chunk_z = -1 ; chunk_z <= 1 ; ++chunk_z) {
-    for (int chunk_y = -1 ; chunk_y <= 1 ; ++chunk_y) {
-    for (int chunk_x = -1 ; chunk_x <= 1 ; ++chunk_x) {
+static void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    #define LOW_X -1
+    #define HIGH_X 1
+    #define LOW_Y -1
+    #define HIGH_Y 0
+    #define LOW_Z -1
+    #define HIGH_Z 1
 
-        // if (chunk_x == 0 && chunk_y == 0 && chunk_z == 0) {
-        //     glm::ivec3 spawn_point = findTreeSpawnpoint();
+    for (int chunk_z = LOW_X ; chunk_z <= HIGH_X ; ++chunk_z) {
+    for (int chunk_y = LOW_Y ; chunk_y <= HIGH_Y ; ++chunk_y) {
+    for (int chunk_x = LOW_Z ; chunk_x <= HIGH_Z ; ++chunk_x) {
 
-        //     generateTrees(blocks, chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, chunk_z * CHUNK_SIZE);
-        // } else {
-        //     generateStage1(temp_chunk, chunk_offset_x, chunk_offset_y, chunk_offset_z);
-        //     findTreeSpawnpoint();
-        //     // generateTrees(blocks, chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, chunk_z * CHUNK_SIZE);
-        // }
+        // int chunk_offset_x = chunk_x * CHUNK_SIZE;
+        // int chunk_offset_y = chunk_y * CHUNK_SIZE;
+        // int chunk_offset_z = chunk_z * CHUNK_SIZE;
+
+        glm::ivec3 chunkOffset = glm::ivec3(chunk_x, chunk_y, chunk_z) * CHUNK_SIZE;
+        glm::ivec3 other_chunkWorldPosition = chunkWorldPosition + chunkOffset;
+
+        if (chunk_x == 0 && chunk_y == 0 && chunk_z == 0) {
+            glm::ivec3 spawn_point = findTreeSpawnpoint(blocks, other_chunkWorldPosition);
+
+            if (spawn_point.x != -1) {
+                placeTree(blocks, spawn_point);
+            }
+        } else {
+            generateStage1(temp_chunk, other_chunkWorldPosition);
+            glm::ivec3 spawn_point = findTreeSpawnpoint(temp_chunk, other_chunkWorldPosition);
+
+            if (spawn_point.x != -1) {
+                placeTree(blocks, spawn_point + chunkOffset);
+            }
+        }
 
     }}}
+}
 
-        // if (blocks[index] > 0 && blocks[prev_index] == 0) {
-        //     placeTree(blocks, chunk_offset_x + 0, chunk_offset_y + dy+1, chunk_offset_z + 0);
-        //     // placeTree(blocks, TREE_X, dy+1, TREE_Z);
-        //     break;
-        // }
+void init()
+{
+    fn = FastNoise::New<FastNoise::Perlin>();
+    // fn = FastNoise::New<FastNoise::Simplex>();
+
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
-    generateStage1(blocks, x, y, z);
+    const glm::ivec3 chunkWorldPos = {x, y, z};
 
-    for (int chunk_z = -1 ; chunk_z <= 1 ; ++chunk_z) {
-    for (int chunk_y = -1 ; chunk_y <= 1 ; ++chunk_y) {
-    for (int chunk_x = -1 ; chunk_x <= 1 ; ++chunk_x) {
-        // if (chunk_x == 0 && chunk_y == 0 && chunk_z == 0) continue;
-        // If neighbour as tree, generate it too
-
-        generateTrees(blocks, chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, chunk_z * CHUNK_SIZE);
-    }}}
+    generateStage1(blocks, chunkWorldPos);
+    generateTrees(blocks, chunkWorldPos);
 }

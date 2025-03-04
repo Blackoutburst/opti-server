@@ -17,7 +17,9 @@ void loadLibraries(void) {
 #endif
 
     LIBRARY lib_worldgen = libraryLoad(worldgenLibPath);
+    if (!lib_worldgen.isValid) return;
 
+    ((worldgen_init)libraryGet(&lib_worldgen, "init"))();
     chunkSetGenChunkFunction((worldgen_genChunk)libraryGet(&lib_worldgen, "genChunk"));
     // libraryFree(&lib_worldgen);
 }

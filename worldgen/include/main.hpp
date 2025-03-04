@@ -21,6 +21,7 @@
 extern "C" {
 #endif
 
+MYLIB_API void init();
 MYLIB_API void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z);
 
 #ifdef __cplusplus
