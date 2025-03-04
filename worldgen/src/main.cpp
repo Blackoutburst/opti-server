@@ -54,12 +54,10 @@ const uint8_t tree[] = {
 
 #define IS_INSIDE_CHUNK(x, y, z) ((x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE))
 
-static FastNoise::SmartNode<FastNoise::Perlin> fn;// = FastNoise::New<FastNoise::Perlin>();
+static FastNoise::SmartNode fn;
 
 static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
 {
-    // auto fn = FastNoise::New<FastNoise::Perlin>();
-
     float hmap[16*16];
     fn->GenUniformGrid2D(hmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
 
@@ -70,16 +68,13 @@ static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
         int iXZ = dz * CHUNK_SIZE + dx;
 
         glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
-        // int world_x = x + dx;
-        // int world_y = y + dy;
-        // int world_z = z + dz;
 
         // if ( de(glm::vec3(world_x, world_y - 450, world_z)) < 0.005f) {
         //     blocks[i] = 3;
         //     continue;
         // }
 
-        float height = (2 + hmap[iXZ]) * 30.0f;
+        float height = (2 + hmap[iXZ]) * 15.0f;
 
         if (blockWorldPosition.y >= height) {
             blocks[i] = 0;
@@ -92,10 +87,14 @@ static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
 
 // xyz -> chunk world position
 static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    const int32_t TREE_X =  0;// (CHUNK_SIZE / 2);
-    const int32_t TREE_Z = 0;//(CHUNK_SIZE / 2);
-    const int32_t TREE_BOTTOM_CENTER_X = 2;//(CHUNK_SIZE / 2);
-    const int32_t TREE_BOTTOM_CENTER_Z = 2;//(CHUNK_SIZE / 2);
+    const int32_t TREE_BOTTOM_CENTER_X = 2;
+    const int32_t TREE_BOTTOM_CENTER_Z = 2;
+
+    float random_X = fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
+    float random_Z = fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
+
+    int TREE_X = (random_X * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_X);
+    int TREE_Z = (random_Z * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_Z);
 
     for (int32_t dy = CHUNK_SIZE - 2 ; dy >= 0 ; --dy) {
         int prev_index = (TREE_Z+TREE_BOTTOM_CENTER_Z) * CHUNK_SIZE*CHUNK_SIZE + (dy+1)*CHUNK_SIZE + (TREE_X+TREE_BOTTOM_CENTER_X);
@@ -169,9 +168,8 @@ static void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
 
 void init()
 {
-    fn = FastNoise::New<FastNoise::Perlin>();
-    // fn = FastNoise::New<FastNoise::Simplex>();
-
+    // fn = FastNoise::New<FastNoise::Perlin>();
+    fn = FastNoise::New<FastNoise::Simplex>();
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
