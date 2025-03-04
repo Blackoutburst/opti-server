@@ -5,6 +5,8 @@
 
 #define CHUNK_SIZE (16)
 #define CHUNK_BLOCK_COUNT (CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE)
+#define INDEX_XYZ(x, y, z) ((z) * CHUNK_SIZE*CHUNK_SIZE + (y) * CHUNK_SIZE + (x))
+#define IS_INSIDE_CHUNK(x, y, z) (((x) >= 0 && (x) < CHUNK_SIZE && (y) >= 0 && (y) < CHUNK_SIZE && (z) >= 0 && (z) < CHUNK_SIZE))
 
 #include "FastNoise/FastNoise.h"
 
@@ -51,9 +53,6 @@ const uint8_t tree[] = {
     0, 0, 0, 0, 0
 };
 
-
-#define IS_INSIDE_CHUNK(x, y, z) ((x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE))
-
 static FastNoise::SmartNode fn;
 
 static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
@@ -64,7 +63,8 @@ static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
-        int i = dz * CHUNK_SIZE*CHUNK_SIZE + dy * CHUNK_SIZE + dx;
+        int i = INDEX_XYZ(dx, dy, dz);
+
         int iXZ = dz * CHUNK_SIZE + dx;
 
         glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
@@ -97,8 +97,8 @@ static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWor
     int TREE_Z = (random_Z * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_Z);
 
     for (int32_t dy = CHUNK_SIZE - 2 ; dy >= 0 ; --dy) {
-        int prev_index = (TREE_Z+TREE_BOTTOM_CENTER_Z) * CHUNK_SIZE*CHUNK_SIZE + (dy+1)*CHUNK_SIZE + (TREE_X+TREE_BOTTOM_CENTER_X);
-        int index      = (TREE_Z+TREE_BOTTOM_CENTER_Z) * CHUNK_SIZE*CHUNK_SIZE +  dy*CHUNK_SIZE    + (TREE_X+TREE_BOTTOM_CENTER_X);
+        int prev_index = INDEX_XYZ(TREE_X+TREE_BOTTOM_CENTER_X, dy+1, TREE_Z+TREE_BOTTOM_CENTER_Z);
+        int index      = INDEX_XYZ(TREE_X+TREE_BOTTOM_CENTER_X, dy  , TREE_Z+TREE_BOTTOM_CENTER_Z);
 
         // can only grow on grass
         if (blocks[index] == 1 && blocks[prev_index] == 0) {
@@ -124,8 +124,7 @@ static void placeTree(uint8_t* blocks, glm::ivec3 localPos) {
 
         if (!IS_INSIDE_CHUNK(x, y, z)) continue;
 
-        const int32_t blocks_index = (z*CHUNK_SIZE*CHUNK_SIZE) + (y*CHUNK_SIZE) + x;
-        blocks[blocks_index] = value;
+        blocks[INDEX_XYZ(x, y, z)] = value;
     }}}
 }
 
@@ -140,10 +139,6 @@ static void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
     for (int chunk_z = LOW_X ; chunk_z <= HIGH_X ; ++chunk_z) {
     for (int chunk_y = LOW_Y ; chunk_y <= HIGH_Y ; ++chunk_y) {
     for (int chunk_x = LOW_Z ; chunk_x <= HIGH_Z ; ++chunk_x) {
-
-        // int chunk_offset_x = chunk_x * CHUNK_SIZE;
-        // int chunk_offset_y = chunk_y * CHUNK_SIZE;
-        // int chunk_offset_z = chunk_z * CHUNK_SIZE;
 
         glm::ivec3 chunkOffset = glm::ivec3(chunk_x, chunk_y, chunk_z) * CHUNK_SIZE;
         glm::ivec3 other_chunkWorldPosition = chunkWorldPosition + chunkOffset;
