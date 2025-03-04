@@ -6,6 +6,8 @@
 // }
 
 // if ( de(glm::vec3(world_x, world_y - 200, world_z) * 0.01f) < 0.005f) {
+
+// Distance Estimator
 float de(glm::vec3 p) {
     constexpr float SCALE = 0.0025f;
 

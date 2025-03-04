@@ -57,6 +57,8 @@ target("worldgen")
 
     add_includedirs("include")
 
+    add_defines("GLM_ENABLE_EXPERIMENTAL")
+
     -- add_cxflags("-W -Wall -Wextra -Wpedantic -Wno-unused-parameter")
     set_optimize("fastest")
     add_files("src/*.cpp")
