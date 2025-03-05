@@ -157,7 +157,7 @@ static void generateStage2(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
     fn_celullarDist->GenUniformGrid3D(map, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.01f, 0);
 
     float maskmap[CHUNK_BLOCK_COUNT];
-    fn->GenUniformGrid3D(maskmap, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.02f, 2434);
+    fn->GenUniformGrid3D(maskmap, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.0025f, 2434);
 
     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
     for (int y = 0 ; y < CHUNK_SIZE ; ++y) {
@@ -166,12 +166,10 @@ static void generateStage2(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
 
         float world_y = chunkWorldPosition.y + y;
 
-        // if (world_y > 0) continue;
-
         float height = hmap[INDEX_XY(x, z)];
 
         float heightFactor = glm::max(0.8f, mapRange(world_y, -64, height, 0.8f, 1.0f));
-        float threshold = heightFactor + maskmap[index] * 0.15f;
+        float threshold = glm::max(heightFactor, maskmap[index] * 5.0f); // use max to not cover the map with caves
 
         if (map[index] > threshold) {
             blocks[index] = (uint8_t)BlockType::Air;
