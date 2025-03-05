@@ -61,7 +61,7 @@ target("worldgen")
 
     -- add_cxflags("-W -Wall -Wextra -Wpedantic -Wno-unused-parameter")
     set_optimize("fastest")
-    add_files("src/*.cpp")
+    add_files("src/*.cpp", "src/**/*.cpp")
 
     add_packages("fastnoise2")
     add_packages("glm")
