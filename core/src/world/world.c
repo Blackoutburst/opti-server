@@ -143,7 +143,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
         U8** data = get(&client->dbChunks, ((VECTORI){x, y, z}));
-        if (y < -32 || worldGetChunk(client, x, y, z)) {
+        if (y < -384 || worldGetChunk(client, x, y, z)) {
 
             if (data != NULL) free(*data);
             continue;

@@ -10,12 +10,39 @@
 #include "glm/gtc/random.hpp"
 #include "main.hpp"
 
+enum class BlockType : uint8_t {
+    Air = 0,
+    Grass = 1,
+    Dirt = 2,
+    Stone = 3,
+    OakLog = 4,
+    OakLeaves = 5,
+    Glass = 6,
+    Water = 7,
+    Sand = 8,
+    Snow = 9,
+    OakPlank = 10,
+    StoneBrick = 11,
+    Netherrack = 12,
+    Gold = 13,
+    PackedIce = 14,
+    Lava = 15,
+    Barrel = 16,
+    Bookshelf = 17,
+
+    INVALID,
+};
+
 #define CHUNK_SIZE (16)
 #define CHUNK_BLOCK_COUNT (CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE)
 #define INDEX_XYZ(x, y, z) ((z) * CHUNK_SIZE*CHUNK_SIZE + (y) * CHUNK_SIZE + (x))
+#define INDEX_XY(x, y) ((y) * CHUNK_SIZE + (x))
 #define IS_INSIDE_CHUNK(x, y, z) (((x) >= 0 && (x) < CHUNK_SIZE && (y) >= 0 && (y) < CHUNK_SIZE && (z) >= 0 && (z) < CHUNK_SIZE))
 
+
 static FastNoise::SmartNode fn;
+static FastNoise::SmartNode fn_celullarValue;
+static FastNoise::SmartNode fn_celullarDist;
 
 thread_local uint8_t temp_chunk[CHUNK_BLOCK_COUNT];
 
@@ -55,7 +82,7 @@ const uint8_t tree[] = {
     0, 0, 0, 0, 0
 };
 
-float map(float value, float min1, float max1, float min2, float max2) {
+float mapRange(float value, float min1, float max1, float min2, float max2) {
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
 }
 
@@ -65,10 +92,22 @@ static void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int
     blocks[index] = value;
 }
 
-static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
-{
+static void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWorldPosition) {
+    fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
+
+    for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
+    for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
+        int index = INDEX_XY(x, z);
+        map[index] = (2 + map[index]) * 15.0f;
+    }}
+}
+
+static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     float hmap[16*16];
-    fn->GenUniformGrid2D(hmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
+    generateHeights(hmap, chunkWorldPosition);
+
+    float cmap[16*16];
+    fn_celullarValue->GenUniformGrid2D(cmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.0025f, 0);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -84,12 +123,58 @@ static void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
         //     continue;
         // }
 
-        float height = (2 + hmap[iXZ]) * 15.0f;
+        float height = hmap[iXZ];// (2 + hmap[iXZ]) * 15.0f;
+
+        height += cmap[INDEX_XY(dx, dz)] * 25.0f;
 
         if (blockWorldPosition.y >= height) {
-            blocks[i] = 0;
+            blocks[i] = (uint8_t)BlockType::Air;
+        } else if (blockWorldPosition.y >= height - 1.0f) {
+            blocks[i] = (uint8_t)BlockType::Grass;
+        } else if (blockWorldPosition.y >= height - 5.0f) {
+            blocks[i] = (uint8_t)BlockType::Dirt;
         } else {
-            blocks[i] = 1;
+            blocks[i] = (uint8_t)BlockType::Stone;
+        }
+    }}}
+}
+
+// static int findTopBlock(uint8_t* blocks, int localX, int localZ) {
+//     if (blocks[INDEX_XYZ(localX, CHUNK_SIZE-1, localZ)] != (uint8_t)BlockType::Air) {
+//         return -1;
+//     }
+//     for (int y = CHUNK_SIZE-1 ; y >= 0 ; --y) {
+//         if (blocks[INDEX_XYZ(localX, y, localZ)] > 0) return y;
+//     }
+//     return -1;
+// }
+
+static void generateStage2(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    float hmap[16*16];
+    generateHeights(hmap, chunkWorldPosition);
+
+    float map[CHUNK_BLOCK_COUNT];
+    fn_celullarDist->GenUniformGrid3D(map, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.01f, 0);
+
+    float maskmap[CHUNK_BLOCK_COUNT];
+    fn->GenUniformGrid3D(maskmap, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.02f, 2434);
+
+    for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
+    for (int y = 0 ; y < CHUNK_SIZE ; ++y) {
+    for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
+        int index = INDEX_XYZ(x, y, z);
+
+        float world_y = chunkWorldPosition.y + y;
+
+        // if (world_y > 0) continue;
+
+        float height = hmap[INDEX_XY(x, z)];
+
+        float heightFactor = glm::max(0.8f, mapRange(world_y, -64, height, 0.8f, 1.0f));
+        float threshold = heightFactor + maskmap[index] * 0.15f;
+
+        if (map[index] > threshold) {
+            blocks[index] = (uint8_t)BlockType::Air;
         }
     }}}
 }
@@ -167,7 +252,7 @@ static void placeTree(uint8_t* blocks, const glm::ivec3& localPos, const glm::iv
     for (int y = leavesBottom ; y < height ; ++y) {
         // Add +1 to leaveWidth because the 0.01 messes the starting width
         // 0.01 to avoid bottom layer to be always one block wider
-        int width = glm::mix(leavesWidth+1, 1, map(y, leavesBottom, height, 0.01f, 1.0f));
+        int width = glm::mix(leavesWidth+1, 1, mapRange(y, leavesBottom, height, 0.01f, 1.0f));
 
         for (int z = trunkWidthMin - width ; z < trunkWidthMax + width ; ++z) {
         for (int x = trunkWidthMin - width ; x < trunkWidthMax + width ; ++x) {
@@ -231,11 +316,27 @@ void init()
 {
     // fn = FastNoise::New<FastNoise::Perlin>();
     fn = FastNoise::New<FastNoise::Simplex>();
+    fn_celullarValue = FastNoise::New<FastNoise::CellularValue>();
+
+    FastNoise::SmartNode<FastNoise::CellularDistance> c = FastNoise::New<FastNoise::CellularDistance>();
+    c->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Div1);
+    c->SetDistanceFunction(FastNoise::DistanceFunction::EuclideanSquared);
+    c->SetDistanceIndex0(1);
+    c->SetDistanceIndex1(3);
+
+    auto domainWarp = FastNoise::New<FastNoise::DomainWarpGradient>();
+    domainWarp->SetSource(c);
+    domainWarp->SetWarpAmplitude(0.2f);
+    domainWarp->SetWarpFrequency(4.0f);
+
+    fn_celullarDist = domainWarp;
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
     generateStage1(blocks, chunkWorldPos);
+    generateStage2(blocks, chunkWorldPos);
+
     generateTrees(blocks, chunkWorldPos);
 }
