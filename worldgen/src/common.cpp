@@ -19,3 +19,13 @@ void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWo
         map[index] = (2 + map[index]) * 15.0f;
     }}
 }
+
+// void generateDensity(float map[CHUNK_BLOCK_COUNT, const glm::ivec3& chunkWorldPosition) {
+//     fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
+
+//     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
+//     for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
+//         int index = INDEX_XY(x, z);
+//         map[index] = (2 + map[index]) * 15.0f;
+//     }}
+// }

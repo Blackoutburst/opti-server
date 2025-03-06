@@ -40,6 +40,7 @@ void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWo
 
 // Global variables //
 inline FastNoise::SmartNode fn;
+inline FastNoise::SmartNode fn_terrain;
 inline FastNoise::SmartNode fn_celullarValue;
 inline FastNoise::SmartNode fn_celullarDist;
 
