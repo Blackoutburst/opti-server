@@ -20,7 +20,6 @@ float getGridAtScaled1(const float* map, int x, int scale)
     float v = glm::mix(value_a, value_b, rest);
 
     return v;
-    // printf("fi: %.2f, ia: %d, ib: %d, value_a: %.2f, value_b: %.2f, rest: %.2f, value: %.2f\n", fi, ia, ib, value_a, value_b, rest, v);
 }
 
 /*
@@ -61,52 +60,51 @@ float getGridAtScaled2(const float* map, int x, int y, int size, int scale)
     return mc;
 }
 
+// float getGridAtScaled3(const float* map, int x, int y, int z, int size, int scale)
+// {
+//     float fix = (float)x / scale;
+//     float fiy = (float)y / scale;
+//     float fiz = (float)z / scale;
 
-float getGridAtScaled3(const float* map, int x, int y, int z, int size, int scale)
-{
-    float fix = (float)x / scale;
-    float fiy = (float)y / scale;
-    float fiz = (float)z / scale;
+//     int ix = (int)fix;
+//     int iy = (int)fiy;
+//     int iz = (int)fiz;
 
-    int ix = (int)fix;
-    int iy = (int)fiy;
-    int iz = (int)fiz;
+//     const int sqSize = size*size;
+//     int i000 = (int)(fiz + 0)*sqSize + (int)(fiy + 0)*size + (int)fix + 0;
+//     int i001 = (int)(fiz + 0)*sqSize + (int)(fiy + 0)*size + (int)fix + 1;
+//     int i010 = (int)(fiz + 0)*sqSize + (int)(fiy + 1)*size + (int)fix + 0;
+//     int i011 = (int)(fiz + 0)*sqSize + (int)(fiy + 1)*size + (int)fix + 1;
 
-    const int sqSize = size*size;
-    int i000 = (int)(fiz + 0)*sqSize + (int)(fiy + 0)*size + (int)fix + 0;
-    int i001 = (int)(fiz + 0)*sqSize + (int)(fiy + 0)*size + (int)fix + 1;
-    int i010 = (int)(fiz + 0)*sqSize + (int)(fiy + 1)*size + (int)fix + 0;
-    int i011 = (int)(fiz + 0)*sqSize + (int)(fiy + 1)*size + (int)fix + 1;
+//     int i100 = (int)(fiz + 1)*sqSize + (int)(fiy + 0)*size + (int)fix + 0;
+//     int i101 = (int)(fiz + 1)*sqSize + (int)(fiy + 0)*size + (int)fix + 1;
+//     int i110 = (int)(fiz + 1)*sqSize + (int)(fiy + 1)*size + (int)fix + 0;
+//     int i111 = (int)(fiz + 1)*sqSize + (int)(fiy + 1)*size + (int)fix + 1;
 
-    int i100 = (int)(fiz + 1)*sqSize + (int)(fiy + 0)*size + (int)fix + 0;
-    int i101 = (int)(fiz + 1)*sqSize + (int)(fiy + 0)*size + (int)fix + 1;
-    int i110 = (int)(fiz + 1)*sqSize + (int)(fiy + 1)*size + (int)fix + 0;
-    int i111 = (int)(fiz + 1)*sqSize + (int)(fiy + 1)*size + (int)fix + 1;
+//     float restx = glm::mod(fix, 1.0f);
+//     float resty = glm::mod(fiy, 1.0f);
+//     float restz = glm::mod(fiz, 1.0f);
 
-    float restx = glm::mod(fix, 1.0f);
-    float resty = glm::mod(fiy, 1.0f);
-    float restz = glm::mod(fiz, 1.0f);
+//     float value_000 = map[i000];
+//     float value_001 = map[i001];
+//     float value_010 = map[i010];
+//     float value_011 = map[i011];
 
-    float value_000 = map[i000];
-    float value_001 = map[i001];
-    float value_010 = map[i010];
-    float value_011 = map[i011];
+//     float value_100 = map[i100];
+//     float value_101 = map[i101];
+//     float value_110 = map[i110];
+//     float value_111 = map[i111];
 
-    float value_100 = map[i100];
-    float value_101 = map[i101];
-    float value_110 = map[i110];
-    float value_111 = map[i111];
+//     float ma = glm::mix(value_000, value_001, restx);
+//     float mb = glm::mix(value_010, value_011, restx);
 
-    float ma = glm::mix(value_000, value_001, restx);
-    float mb = glm::mix(value_010, value_011, restx);
+//     float mc = glm::mix(value_100, value_101, restx);
+//     float md = glm::mix(value_110, value_111, restx);
 
-    float mc = glm::mix(value_100, value_101, restx);
-    float md = glm::mix(value_110, value_111, restx);
+//     float me = glm::mix(ma, mb, resty);
+//     float mf = glm::mix(mc, md, resty);
 
-    float me = glm::mix(ma, mb, resty);
-    float mf = glm::mix(mc, md, resty);
+//     float mg = glm::mix(me, mf, restz);
 
-    float mg = glm::mix(ma, mb, restz);
-
-    return mg;
-}
+//     return mg;
+// }

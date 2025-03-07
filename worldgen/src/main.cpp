@@ -62,7 +62,7 @@ void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
     generateStage1(blocks, chunkWorldPos);
-    // generateStage2(blocks, chunkWorldPos);
+    generateStage2(blocks, chunkWorldPos);
 
-    // generateTrees(blocks, chunkWorldPos);
+    generateTrees(blocks, chunkWorldPos);
 }
