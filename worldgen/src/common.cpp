@@ -11,7 +11,7 @@ void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ
 }
 
 void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWorldPosition) {
-    fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
+    fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, 0.01f, 0);
 
     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
     for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
@@ -21,7 +21,7 @@ void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWo
 }
 
 // void generateDensity(float map[CHUNK_BLOCK_COUNT, const glm::ivec3& chunkWorldPosition) {
-//     fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.01f, 0);
+//     fn->GenUniformGrid2D(map, chunkWorldPosition.x, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, 0.01f, 0);
 
 //     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
 //     for (int x = 0 ; x < CHUNK_SIZE ; ++x) {

@@ -10,7 +10,7 @@
 
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     constexpr int SCALE = 2;
-    constexpr int SIZE = (16 / SCALE) + 1;
+    constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
     float hmap[SIZE*SIZE];
     fn->GenUniformGrid2D(hmap, chunkWorldPosition.x / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, 0.01f * SCALE, 0);
 
