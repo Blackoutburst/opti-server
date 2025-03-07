@@ -2,6 +2,8 @@
 #include <string.h>
 #include "world/chunk.h"
 #include "library/library.h"
+#include "utils/perfTimer.h"
+#include "utils/logger.h"
 
 static worldgen_genChunk func_genChunk = NULL;
 
@@ -13,7 +15,9 @@ U8* chunkGenerate(I32 x, I32 y, I32 z) {
     U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);
 
     if (func_genChunk != NULL) {
-       func_genChunk(blocks, x, y, z);
+        perfTimerBegin("genChunk");
+        func_genChunk(blocks, x, y, z);
+        perfTimerEnd();
     } else {
         for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) {
             I32 by = (i / CHUNK_SIZE) % CHUNK_SIZE;

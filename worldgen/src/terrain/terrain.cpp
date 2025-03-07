@@ -8,20 +8,30 @@
 #include "utils/grid.hpp"
 #include "common.hpp"
 
-
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    float hmap[16*16];
-    generateHeights(hmap, chunkWorldPosition);
+    constexpr int SCALE = 2;
+    constexpr int SIZE = (16 / SCALE) + 1;
+    float hmap[SIZE*SIZE];
+    fn->GenUniformGrid2D(hmap, chunkWorldPosition.x / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, 0.01f * SCALE, 0);
 
-    float cmap[16*16];
-    fn_celullarValue->GenUniformGrid2D(cmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.0025f, 0);
+    // float hmap[16*16];
+    // generateHeights(hmap, chunkWorldPosition);
+
+    // float cmap[16*16];
+    // float cmap[9*9];
+    // fn_celullarValue->GenUniformGrid2D(cmap, chunkWorldPosition.x, chunkWorldPosition.z, 9, 9, 0.0025f * 2.0f, 0);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
-    for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
-        int i = INDEX_XYZ(dx, dy, dz);
+        float rawHeight = getGridAtScaled2<SIZE, SCALE>(hmap, dx, dz);
+        // float rawHeight = getGridAtScaled2(hmap, dx, dz, SIZE, SCALE);
+        float height = (2 + rawHeight) * 15.0f;
 
-        int iXZ = dz * CHUNK_SIZE + dx;
+    for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
+        const int i = INDEX_XYZ(dx, dy, dz);
+        // int iXZ = dz * CHUNK_SIZE + dx;
+        // float height = hmap[iXZ];
+        // float height = (2 + hmap[iXZ]) * 15.0f;
 
         glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
 
@@ -30,9 +40,8 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         //     continue;
         // }
 
-        float height = hmap[iXZ];// (2 + hmap[iXZ]) * 15.0f;
-
-        height += cmap[INDEX_XY(dx, dz)] * 25.0f;
+        // height += getGridAtScaled2(cmap, dx, dz, 9, 2) * 25.0f;
+        // height += cmap[INDEX_XY(dx, dz)] * 25.0f;
 
         if (blockWorldPosition.y >= height) {
             blocks[i] = (uint8_t)BlockType::Air;

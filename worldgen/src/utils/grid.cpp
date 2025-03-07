@@ -1,6 +1,7 @@
 #include "utils/grid.hpp"
 #include <glm/glm.hpp>
 #include <glm/common.hpp>
+#include <math.h>
 
 // map is size one more than it's size for interpolation purposes
 // void getGridAtScaled(const float* map, int x, int y, int scale)
@@ -48,17 +49,18 @@ float getGridAtScaled2(const float* map, int x, int y, int size, int scale)
     float resty = glm::mod(fiy, 1.0f);
 
     float value_00 = map[i00];
-    float value_10 = map[i01];
+    float value_01 = map[i01];
 
-    float value_01 = map[i10];
+    float value_10 = map[i10];
     float value_11 = map[i11];
 
-    float ma = glm::mix(value_00, value_10, restx);
-    float mb = glm::mix(value_01, value_11, restx);
+    float ma = glm::mix(value_00, value_01, restx);
+    float mb = glm::mix(value_10, value_11, restx);
     float mc = glm::mix(ma, mb, resty);
 
     return mc;
 }
+
 
 float getGridAtScaled3(const float* map, int x, int y, int z, int size, int scale)
 {
