@@ -23,7 +23,7 @@
 #define TCP_PORT 20000
 #define TCP_LISTENT_QUEUE_SIZE 8
 #define MAX_TCP_CLIENT 16
-#define BUFFER_SIZE 5000
+// #define BUFFER_SIZE 5000
 
 typedef struct tcpClient TCP_CLIENT;
 
