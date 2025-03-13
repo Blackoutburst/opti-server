@@ -64,10 +64,10 @@ void _serverSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     packet.pitch = entity->pitch;
     memcpy(packet.name, entity->name, 64);
 
-    U8* buffer = encodePacketAddEntity(&packet);
+    const U32 packetSize = getClientPacketSize(CLIENT_PACKET_ADD_ENTITY);
+    U8 buffer[packetSize];
+    encodePacketAddEntity(buffer, &packet);
     _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY));
-
-    free(buffer);
 }
 
 void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
@@ -75,10 +75,10 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
     packet.id = CLIENT_PACKET_REMOVE_ENTITY;
     packet.entityId = entityId;
 
-    U8* buffer = encodePacketRemoveEntity(&packet);
+    const U32 packetSize = getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY);
+    U8 buffer[packetSize];
+    encodePacketRemoveEntity(buffer, &packet);
     _serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY));
-
-    free(buffer);
 }
 
 #if defined(_WIN32) || defined(_WIN64)

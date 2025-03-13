@@ -87,7 +87,9 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
         p.z = chunk->position.z;
         p.type = chunk->blocks[0];
 
-        U8* tempBuff = encodePacketSendMonotypeChunk(&p);
+        const U32 packetSize = getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK);
+        U8 tempBuff[packetSize];
+        encodePacketSendMonotypeChunk(tempBuff, &p);
 
         TCP_CLIENT** tcpClients = getAllClients();
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
@@ -99,9 +101,8 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
                 p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
                 p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
             ) continue;
-            serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
+            serverWrite(tcpClients[i], tempBuff, packetSize);
         }
-        free(tempBuff);
     } else {
         C04SEND_CHUNK p;
         p.id = CLIENT_PACKET_SEND_CHUNK;
@@ -110,7 +111,9 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
         p.z = chunk->position.z;
         for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) p.blocks[i] = chunk->blocks[i];
 
-        U8* tempBuff = encodePacketSendChunk(&p);
+        const U32 packetSize = getClientPacketSize(CLIENT_PACKET_SEND_CHUNK);
+        U8 tempBuff[packetSize];
+        encodePacketSendChunk(tempBuff, &p);
 
         TCP_CLIENT** tcpClients = getAllClients();
         for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
@@ -122,9 +125,8 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
                 p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
                 p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
             ) continue;
-            serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+            serverWrite(tcpClients[i], tempBuff, packetSize);
         }
-        free(tempBuff);
     }
 
     dbAddChunk(chunk);
@@ -193,7 +195,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
             p.z = chunk->position.z;
             p.type = chunk->blocks[0];
 
-            U8* tempBuff = encodePacketSendMonotypeChunk(&p);
+            U8 tempBuff[5000];
+            encodePacketSendMonotypeChunk(tempBuff, &p);
 
             for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
                 if (tcpClients[i] == NULL) continue;
@@ -206,7 +209,6 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
                 ) continue;
                 serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
             }
-            free(tempBuff);
         } else {
             C04SEND_CHUNK p;
             p.id = CLIENT_PACKET_SEND_CHUNK;
@@ -215,7 +217,9 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
             p.z = chunk->position.z;
             for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) p.blocks[i] = chunk->blocks[i];
 
-            U8* tempBuff = encodePacketSendChunk(&p);
+            const U32 packetSize = getClientPacketSize(CLIENT_PACKET_SEND_CHUNK);
+            U8 tempBuff[packetSize];
+            encodePacketSendChunk(tempBuff, &p);
 
             for (U32 i = 0; i < MAX_TCP_CLIENT; i++) {
                 if (tcpClients[i] == NULL) continue;
@@ -226,9 +230,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
                     p.z < tcpClients[i]->chunkPosition.z - tcpClients[i]->renderDistance * CHUNK_SIZE ||
                     p.z > tcpClients[i]->chunkPosition.z + tcpClients[i]->renderDistance * CHUNK_SIZE
                 ) continue;
-                serverWrite(tcpClients[i], tempBuff, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
+                serverWrite(tcpClients[i], tempBuff, packetSize);
             }
-            free(tempBuff);
         }
         dbAddChunk(chunk);
         chunkClean(chunk);
@@ -258,10 +261,11 @@ void clientReceiveChat(TCP_CLIENT* client, U8* buffer) {
     memcpy(newPacket.message, message, 4096);
     logI("%s\n", message);
 
-    U8* tempBuff = encodePacketChat(&newPacket);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_CHAT);
+    U8 tempBuff[packetSize];
+    encodePacketChat(tempBuff, &newPacket);
 
     serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_CHAT));
-    free(tempBuff);
     free(packet);
 }
 
@@ -285,10 +289,11 @@ void clientReceiveClientMetadata(TCP_CLIENT* client, U8* buffer) {
 
     logI("Client %i new render distance %i new name %s\n", client->id, client->renderDistance, client->name);
 
-    U8* tempBuff = encodePacketEntityMetadata(&newPacket);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA);
+    U8 tempBuff[packetSize];
+    encodePacketEntityMetadata(tempBuff, &newPacket);
 
-    serverBroadcast(tempBuff, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
-    free(tempBuff);
+    serverBroadcast(tempBuff, packetSize);
     free(packet);
 }
 
@@ -297,10 +302,10 @@ void clientSendIdentification(TCP_CLIENT* client) {
     packet.id = CLIENT_PACKET_IDENTIFICATION;
     packet.entityId = getClientId();
 
-    U8* buffer = encodePacketIdentification(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_IDENTIFICATION));
-
-    free(buffer);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_IDENTIFICATION);
+    U8 buffer[packetSize];
+    encodePacketIdentification(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
@@ -314,10 +319,10 @@ void clientSendAddEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     packet.pitch = entity->pitch;
     memcpy(packet.name, entity->name, 64);
 
-    U8* buffer = encodePacketAddEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_ADD_ENTITY));
-
-    free(buffer);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_ADD_ENTITY);
+    U8 buffer[packetSize];
+    encodePacketAddEntity(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
@@ -325,10 +330,10 @@ void clientSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
     packet.id = CLIENT_PACKET_REMOVE_ENTITY;
     packet.entityId = entityId;
 
-    U8* buffer = encodePacketRemoveEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY));
-
-    free(buffer);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_REMOVE_ENTITY);
+    U8 buffer[packetSize];
+    encodePacketRemoveEntity(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendUpdateEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
@@ -341,10 +346,10 @@ void clientSendUpdateEntity(TCP_CLIENT* client, TCP_CLIENT* entity) {
     packet.yaw = entity->yaw;
     packet.pitch = entity->pitch;
 
-    U8* buffer = encodePacketUpdateEntity(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY));
-
-    free(buffer);
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY);
+    U8 buffer[packetSize];
+    encodePacketUpdateEntity(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendChunk(TCP_CLIENT* client, CHUNK* chunk) {
@@ -355,10 +360,10 @@ void clientSendChunk(TCP_CLIENT* client, CHUNK* chunk) {
     packet.z = chunk->position.z;
     for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) packet.blocks[i] = chunk->blocks[i];
 
-    U8* buffer = encodePacketSendChunk(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_CHUNK));
-
-    free(buffer);
+    const U32 packetSize = getClientPacketSize(CLIENT_PACKET_SEND_CHUNK);
+    U8 buffer[packetSize];
+    encodePacketSendChunk(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendMonotypeChunk(TCP_CLIENT* client, CHUNK* chunk) {
@@ -369,10 +374,10 @@ void clientSendMonotypeChunk(TCP_CLIENT* client, CHUNK* chunk) {
     packet.z = chunk->position.z;
     packet.type = chunk->blocks[0];
 
-    U8* buffer = encodePacketSendMonotypeChunk(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK));
-
-    free(buffer);
+    const U32 packetSize = getClientPacketSize(CLIENT_PACKET_SEND_MONOTYPE_CHUNK);
+    U8 buffer[packetSize];
+    encodePacketSendMonotypeChunk(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 }
 
 void clientSendChat(TCP_CLIENT* client, const U8* message) {
@@ -382,11 +387,12 @@ void clientSendChat(TCP_CLIENT* client, const U8* message) {
     U8* encodedString = encodeString(message, 4096);
     memcpy(packet.message, encodedString, 4096);
 
-    U8* buffer = encodePacketChat(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_CHAT));
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_CHAT);
+    U8 buffer[packetSize];
+    encodePacketChat(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 
     free(encodedString);
-    free(buffer);
 }
 
 void clientSendClientMetadata(TCP_CLIENT* client, TCP_CLIENT* entity) {
@@ -397,9 +403,10 @@ void clientSendClientMetadata(TCP_CLIENT* client, TCP_CLIENT* entity) {
     U8* encodedString = encodeString(entity->name, 64);
     memcpy(packet.name, encodedString, 64);
 
-    U8* buffer = encodePacketEntityMetadata(&packet);
-    serverWrite(client, buffer, getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA));
+    const I32 packetSize = getClientPacketSize(CLIENT_PACKET_UPDATE_ENTITY_METADATA);
+    U8 buffer[packetSize];
+    encodePacketEntityMetadata(buffer, &packet);
+    serverWrite(client, buffer, packetSize);
 
     free(encodedString);
-    free(buffer);
 }
