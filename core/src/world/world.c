@@ -97,8 +97,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
 
-    // perfTimerBegin("dbGetChunksInRegions");
-
     if (bx != 0) {
         I32 minX = bx > 0 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
         I32 maxX = bx > 0 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
@@ -121,7 +119,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, minY, maxY, newbbminZ, newbbmaxZ);
     }
 
-    // BUG ??: Z axis seems to be 2~3x slower than X axis and Y axis
     if (bz != 0) {
         I32 minZ = bz > 0 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
         I32 maxZ = bz > 0 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
@@ -133,18 +130,17 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, newbbminY, newbbmaxY, minZ, maxZ);
     }
 
-    // perfTimerEnd();
-
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
+
+    // perfTimerBegin("worldUpdateClientChunk");
 
     // Do not use <= or it will not match the above code
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
         U8** data = get(&client->dbChunks, ((VECTORI){x, y, z}));
-        if (y < -384 || worldGetChunk(client, x, y, z)) {
-
+        if (y > 256 || y < -256 || worldGetChunk(client, x, y, z)) {
             if (data != NULL) free(*data);
             continue;
         }
@@ -152,38 +148,28 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         CHUNK* c = NULL;
         if (data == NULL) {
             c = chunkCreate(x, y, z);
-            chunksToAdd[addIndex] = c;
-            addIndex++;
-
-            worldAddChunk(client, c);
-
-            if (chunkIsEmpty(c)) {
-                continue;
-            }
-            if (chunkIsMonotype(c)) {
-                clientSendMonotypeChunk(client, c);
-                continue;
-            }
-            clientSendChunk(client, c);
+            chunksToAdd[addIndex++] = c;
         } else {
             c = chunkAssemble(x, y, z, *data);
-            worldAddChunk(client, c);
+        }
 
-            if (chunkIsEmpty(c)) {
-                chunkClean(c);
-                continue;
-            }
+        worldAddChunk(client, c);
+
+        if (!chunkIsEmpty(c)) {
             if (chunkIsMonotype(c)) {
                 clientSendMonotypeChunk(client, c);
-                chunkClean(c);
-                continue;
+            } else {
+                clientSendChunk(client, c);
             }
-            clientSendChunk(client, c);
+        }
+
+        if (data != NULL) {  // Clean if chunk was already in db
             chunkClean(c);
         }
+
     }}}
 
-    // if (generatedChunks) logW("generatedChunks");
+    // perfTimerEnd();
 
     clear(&client->dbChunks);
 
