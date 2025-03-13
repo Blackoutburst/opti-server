@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "library/library.h"
 #include "utils/string.h"
 #include "utils/logger.h"
@@ -22,8 +23,8 @@ LIBRARY libraryLoad(const I8* name) {
     return lib;
 }
 
-void* libraryGet(const LIBRARY* lib, const I8* functionName) {
-    void* func = GetProcAddress(lib->handle, functionName);
+funcptr libraryGet(const LIBRARY* lib, const I8* functionName) {
+    funcptr func = (funcptr)GetProcAddress(lib->handle, functionName);
 
     if (func == NULL) {
         logE("Loading function %s", functionName);
@@ -62,8 +63,8 @@ LIBRARY libraryLoad(const I8* name) {
 
 }
 
-void* libraryGet(const LIBRARY* lib, const I8* functionName) {
-    void* func = dlsym(lib->handle, functionName);
+funcptr libraryGet(const LIBRARY* lib, const I8* functionName) {
+    funcptr func = dlsym(lib->handle, functionName);
 
     if (func == NULL) {
         logE("Loading function %s", functionName);

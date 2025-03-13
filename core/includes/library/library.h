@@ -14,6 +14,8 @@ struct library {
     U8 isValid;
 };
 
+typedef void (*funcptr)(void);
+
 #else
 
 struct library {
@@ -22,8 +24,11 @@ struct library {
     U8 isValid;
 };
 
+typedef void* funcptr;
+
 #endif
+
 
 LIBRARY libraryLoad(const I8* name);
 void libraryFree(LIBRARY* dll);
-void* libraryGet(const LIBRARY* lib, const I8* functionName);
+funcptr libraryGet(const LIBRARY* lib, const I8* functionName);

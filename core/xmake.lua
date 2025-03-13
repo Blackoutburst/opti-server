@@ -2,15 +2,11 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("clatest", "c++20")
 
-if is_mode("release") then
-    set_optimize("fastest")
-end
-
 target("server")
-
     set_kind("binary")
-    -- add_cflags("-std=c23")
-    add_cxflags("-W", "-Wall", "-Wextra", "-Wpedantic", "-Wno-unused-parameter")
+    set_warnings("allextra", "extra", "error") -- "pedantic"
+    add_cxflags("-Wno-unused-parameter", "-Wno-unused-but-set-variable")
+
     add_includedirs("includes")
     add_files("src/*.c", "src/**/*.c")
 

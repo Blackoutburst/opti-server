@@ -39,7 +39,7 @@ U8 recvAll(TCP_CLIENT* client, U8* buffer, U32 size, U32 bufferOffset) {
     U32 totalBytesRead = 0;
 
     while (totalBytesRead < size) {
-        I32 bytesRead = recv(client->socket, buffer + totalBytesRead + bufferOffset, size - totalBytesRead, 0);
+        I32 bytesRead = recv(client->socket, (char*)(buffer + totalBytesRead + bufferOffset), size - totalBytesRead, 0);
         totalBytesRead += bytesRead;
 
         if (bytesRead <= 0) {
