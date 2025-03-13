@@ -15,9 +15,7 @@ U8* chunkGenerate(I32 x, I32 y, I32 z) {
     U8* blocks = malloc(sizeof(U8) * CHUNK_BLOCK_COUNT);
 
     if (func_genChunk != NULL) {
-        perfTimerBegin("genChunk");
         func_genChunk(blocks, x, y, z);
-        perfTimerEnd();
     } else {
         for (U32 i = 0; i < CHUNK_BLOCK_COUNT; i++) {
             I32 by = (i / CHUNK_SIZE) % CHUNK_SIZE;
@@ -42,9 +40,10 @@ U8 _chunkIsMonotype(U8* blocks) {
 
 U8 chunkIsMonotype(CHUNK* chunk) {
     if (chunk == NULL) return 0;
-    if (chunk->monotype) return 1;
+    return chunk->monotype;
 
-    return _chunkIsMonotype(chunk->blocks);
+    // if (chunk->monotype) return 1;
+    // return _chunkIsMonotype(chunk->blocks); // WTF ?
 }
 
 U8 chunkIsEmpty(CHUNK* chunk) {
