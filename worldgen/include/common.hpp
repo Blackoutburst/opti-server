@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 #include <FastNoise/FastNoise.h>
 
 #define CHUNK_SIZE (16)
@@ -47,6 +49,42 @@ inline FastNoise::SmartNode fn_celullarDist;
 inline FastNoise::SmartNode noise_continental; // 2D - height
 inline FastNoise::SmartNode noise_terrain_density; // 3D -
 // inline FastNoise::SmartNode noise_cave_density; // 3D -
+
+
+using NoiseCache = std::unordered_map<glm::ivec3, float*>;
+
+inline NoiseCache cache_noise_terrain_density; // 3D
+inline NoiseCache cache_noise_continental; // 2D
+
+
+inline float* getNoiseCache(NoiseCache& cache, const glm::ivec3& pos, int dimensions, const FastNoise::SmartNode<auto>& noise) {
+    // FastNoise::SmartNode noise;
+    const auto it = cache.find(pos);
+    if (it != cache.end()) {
+        return it->second;
+    }
+
+    constexpr int MAX_SIZE = 1000;
+    if (cache.size() > MAX_SIZE) {
+        for (const auto& it : cache) {
+            free(it.second);
+        }
+        cache.clear();
+    }
+
+    float* v;
+    if (dimensions == 2) {
+        v = (float*)malloc(CHUNK_SIZE*CHUNK_SIZE * sizeof(float));
+        noise->GenUniformGrid2D(v, pos.x, pos.z, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+    }
+    else if (dimensions == 3) {
+        v = (float*)malloc(CHUNK_BLOCK_COUNT * sizeof(float));
+        noise->GenUniformGrid3D(v, pos.x, pos.y, pos.z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+    }
+
+    cache[pos] = v;
+    return v;
+}
 
 inline thread_local uint8_t temp_chunk[CHUNK_BLOCK_COUNT];
 // -- //

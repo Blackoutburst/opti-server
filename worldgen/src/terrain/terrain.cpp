@@ -104,11 +104,14 @@
 // }
 
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    float v_continental[CHUNK_SIZE*CHUNK_SIZE];
-    noise_continental->GenUniformGrid2D(v_continental, chunkWorldPosition.x, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+    // float v_continental[CHUNK_SIZE*CHUNK_SIZE];
+    // noise_continental->GenUniformGrid2D(v_continental, chunkWorldPosition.x, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
 
-    float v_terrain_density[CHUNK_BLOCK_COUNT];
-    noise_terrain_density->GenUniformGrid3D(v_terrain_density, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+    // float v_terrain_density[CHUNK_BLOCK_COUNT];
+    // noise_terrain_density->GenUniformGrid3D(v_terrain_density, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+
+    float* v_continental = getNoiseCache(cache_noise_continental, chunkWorldPosition, 2, noise_continental);
+    float* v_terrain_density = getNoiseCache(cache_noise_terrain_density, chunkWorldPosition, 3, noise_terrain_density);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
