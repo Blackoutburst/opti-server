@@ -1,5 +1,7 @@
 #pragma once
 
+namespace Easings {
+
 float easeInSine(float x);
 float easeOutSine(float x);
 float easeInOutSine(float x);
@@ -21,3 +23,5 @@ float easeInOutExpo(float x);
 float easeInCirc(float x);
 float easeOutCirc(float x);
 float easeInOutCirc(float x);
+
+}

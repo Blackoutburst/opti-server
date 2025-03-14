@@ -130,10 +130,13 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     #define LOW_Z -1
     #define HIGH_Z 1
 
+    if (glm::abs(chunkWorldPosition.y - (noise_continental->GenSingle2D(chunkWorldPosition.x, chunkWorldPosition.z, 0) * 200.0f + 16)) > 100) return; // if widely outside of approximate terrain height
+
+    if (chunkWorldPosition.y < 0) return; // don't generated trees under sea level
+
     for (int chunk_z = LOW_X ; chunk_z <= HIGH_X ; ++chunk_z) {
     for (int chunk_y = LOW_Y ; chunk_y <= HIGH_Y ; ++chunk_y) {
     for (int chunk_x = LOW_Z ; chunk_x <= HIGH_Z ; ++chunk_x) {
-
         glm::ivec3 chunkOffset = glm::ivec3(chunk_x, chunk_y, chunk_z) * CHUNK_SIZE;
         glm::ivec3 other_chunkWorldPosition = chunkWorldPosition + chunkOffset;
 
@@ -144,6 +147,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
             if (spawn_point.x != -1) spawnPoints.push_back(spawn_point);
         } else {
             generateStage1(temp_chunk, other_chunkWorldPosition);
+            generateStageSurface(temp_chunk, other_chunkWorldPosition);
             glm::ivec3 spawn_point = findTreeSpawnpoint(temp_chunk, other_chunkWorldPosition);
             if (spawn_point.x != -1) spawnPoints.push_back(spawn_point + chunkOffset);
         }

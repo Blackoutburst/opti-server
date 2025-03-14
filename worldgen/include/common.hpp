@@ -44,5 +44,9 @@ inline FastNoise::SmartNode fn_terrain;
 inline FastNoise::SmartNode fn_celullarValue;
 inline FastNoise::SmartNode fn_celullarDist;
 
+inline FastNoise::SmartNode noise_continental; // 2D - height
+inline FastNoise::SmartNode noise_terrain_density; // 3D -
+// inline FastNoise::SmartNode noise_cave_density; // 3D -
+
 inline thread_local uint8_t temp_chunk[CHUNK_BLOCK_COUNT];
 // -- //
