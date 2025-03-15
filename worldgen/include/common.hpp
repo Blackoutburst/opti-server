@@ -57,8 +57,7 @@ inline NoiseCache cache_noise_terrain_density; // 3D
 inline NoiseCache cache_noise_continental; // 2D
 
 
-inline float* getNoiseCache(NoiseCache& cache, const glm::ivec3& pos, int dimensions, const FastNoise::SmartNode<auto>& noise) {
-    // FastNoise::SmartNode noise;
+inline float* getNoiseCache(NoiseCache& cache, const glm::ivec3& pos, int dimensions, const FastNoise::SmartNode<>& noise) {
     const auto it = cache.find(pos);
     if (it != cache.end()) {
         return it->second;

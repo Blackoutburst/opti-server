@@ -5,7 +5,7 @@ set_languages("clatest", "c++20")
 target("server")
     set_kind("binary")
     set_warnings("allextra", "extra", "error") -- "pedantic"
-    add_cxflags("-Wno-unused-parameter", "-Wno-unused-but-set-variable")
+    add_cxflags("-Wno-unused-parameter", "-Wno-unused-but-set-variable", "-Wno-error=stringop-overread") -- stringop-overread for sqlite3 causing a warning
 
     add_includedirs("includes")
     add_files("src/*.c", "src/**/*.c")
