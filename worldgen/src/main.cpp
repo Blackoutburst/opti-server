@@ -15,10 +15,6 @@
 
 void init()
 {
-    // fn = FastNoise::New<FastNoise::Perlin>();
-    fn = FastNoise::New<FastNoise::Simplex>();
-    fn_celullarValue = FastNoise::New<FastNoise::CellularValue>();
-
     // Cave //
     FastNoise::SmartNode<FastNoise::CellularDistance> c = FastNoise::New<FastNoise::CellularDistance>();
     c->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Div1);
@@ -56,6 +52,7 @@ void init()
     fract_terrain->SetWeightedStrength(0.5f);
 
     fn_terrain = fract_terrain;
+    // -- //
 
 
     // Continental //

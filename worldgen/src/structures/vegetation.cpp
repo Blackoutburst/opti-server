@@ -46,8 +46,8 @@ static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWor
     const int32_t TREE_BOTTOM_CENTER_X = 0;//2;
     const int32_t TREE_BOTTOM_CENTER_Z = 0;//2;
 
-    float random_X = fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
-    float random_Z = fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
+    float random_X = 7;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
+    float random_Z = 7;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
 
     int TREE_X = (random_X * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_X);
     int TREE_Z = (random_Z * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_Z);

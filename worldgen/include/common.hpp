@@ -37,11 +37,10 @@ enum class BlockType : uint8_t {
 
 float mapRange(float value, float min1, float max1, float min2, float max2);
 void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ);
-void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWorldPosition);
+// void generateHeights(float map[CHUNK_SIZE*CHUNK_SIZE], const glm::ivec3& chunkWorldPosition);
 
 
 // Global variables //
-inline FastNoise::SmartNode fn;
 inline FastNoise::SmartNode fn_terrain;
 inline FastNoise::SmartNode fn_celullarValue;
 inline FastNoise::SmartNode fn_celullarDist;
@@ -57,7 +56,7 @@ inline NoiseCache cache_noise_terrain_density; // 3D
 inline NoiseCache cache_noise_continental; // 2D
 
 
-inline float* getNoiseCache(NoiseCache& cache, const glm::ivec3& pos, int dimensions, const FastNoise::SmartNode<>& noise) {
+inline float* getNoiseCache(NoiseCache& cache, const glm::ivec3& pos, int dimensions, const FastNoise::SmartNode<FastNoise::Generator>& noise) {
     const auto it = cache.find(pos);
     if (it != cache.end()) {
         return it->second;
