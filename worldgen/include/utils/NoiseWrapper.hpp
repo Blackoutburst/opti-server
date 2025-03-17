@@ -24,14 +24,12 @@ private:
     float* _data = nullptr;
 };
 
-
 using NoiseCache = std::unordered_map<glm::ivec3, float*>;
 
-constexpr int SCALE = 8;
-constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
-
+template<int SCALE>
 class Noise {
-    const int MAX_CACHE_SIZE = 1000;
+    static constexpr int MAX_CACHE_SIZE = 1500;
+    static constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
 
 public:
     Noise() = default;
@@ -57,10 +55,8 @@ public:
     }
 
     NoiseData<SIZE, SCALE> genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
-    // float* genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
         const auto it = _cache2D.find(pos);
         if (it != _cache2D.end()) {
-            // return it->second;
             return NoiseData<SIZE, SCALE>(it->second);
         }
 
@@ -78,7 +74,6 @@ public:
     NoiseData<SIZE, SCALE> genGrid3D(const glm::ivec3& pos, float frequency = 1.0f) {
         const auto it = _cache3D.find(pos);
         if (it != _cache3D.end()) {
-            // return it->second;
             return NoiseData<SIZE, SCALE>(it->second);
         }
 
@@ -90,7 +85,6 @@ public:
         _noise->GenUniformGrid3D(v, pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
 
         _cache3D[pos] = v;
-        // return v;
         return NoiseData<SIZE, SCALE>(v);
     }
 
@@ -104,7 +98,8 @@ private:
 
 private:
     FastNoise::SmartNode<FastNoise::Generator> _noise;
+    int _seed = 0;
+
     NoiseCache _cache2D;
     NoiseCache _cache3D;
-    int _seed = 0;
 };

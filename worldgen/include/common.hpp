@@ -36,9 +36,9 @@ float mapRange(float value, float min1, float max1, float min2, float max2);
 void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ);
 
 // Global variables //
-inline Noise noise_terrain_density;
-inline Noise noise_continental;
-inline Noise noise_cave_density;
+inline Noise<4> noise_terrain_density;
+inline Noise<8> noise_continental;
+inline Noise<2> noise_cave_density;
 
 inline thread_local uint8_t temp_chunk[CHUNK_BLOCK_COUNT];
 // -- //
