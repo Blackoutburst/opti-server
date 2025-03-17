@@ -62,22 +62,41 @@ void init()
     // -- //
 
     // Cave //
-    FastNoise::SmartNode<FastNoise::CellularDistance> c = FastNoise::New<FastNoise::CellularDistance>();
+    auto c = FastNoise::New<FastNoise::CellularDistance>();
     c->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Div1);
     c->SetDistanceFunction(FastNoise::DistanceFunction::EuclideanSquared);
     c->SetDistanceIndex0(1);
     c->SetDistanceIndex1(3);
 
+    auto domainScale = FastNoise::New<FastNoise::DomainAxisScale>();
+    domainScale->SetSource(c);
+    domainScale->SetScale<FastNoise::Dim::X>(0.6f);
+    domainScale->SetScale<FastNoise::Dim::Y>(1.2f);
+    domainScale->SetScale<FastNoise::Dim::Z>(0.6f);
+
     auto domainWarp = FastNoise::New<FastNoise::DomainWarpGradient>();
-    domainWarp->SetSource(c);
+    domainWarp->SetSource(domainScale);
     domainWarp->SetWarpAmplitude(0.2f);
     domainWarp->SetWarpFrequency(4.0f);
 
-    auto domainScale = FastNoise::New<FastNoise::DomainAxisScale>();
-    domainScale->SetSource(domainWarp);
-    domainScale->SetScale<FastNoise::Dim::Y>(1.4f);
+    noise_cave_density.assign(domainWarp);
+    // -- //
 
-    noise_cave_density.assign(domainScale);
+    // big caves //
+    auto c1 = FastNoise::New<FastNoise::Simplex>();
+
+    auto c1_fract = FastNoise::New<FastNoise::FractalFBm>();
+    c1_fract->SetSource(c1);
+    c1_fract->SetOctaveCount(4);
+    c1_fract->SetGain(0.5f);
+    c1_fract->SetLacunarity(2.0f);
+    c1_fract->SetWeightedStrength(0.5f);
+
+    auto c1_scale = FastNoise::New<FastNoise::DomainAxisScale>();
+    c1_scale->SetSource(c1_fract);
+    c1_scale->SetScale<FastNoise::Dim::Y>(2.0f);
+
+    noise_cave_density1.assign(c1_scale);
     // -- //
 }
 

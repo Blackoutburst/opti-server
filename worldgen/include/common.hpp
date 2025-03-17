@@ -39,4 +39,6 @@ void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ
 inline Noise<4> noise_terrain_density;
 inline Noise<8> noise_continental;
 inline Noise<2> noise_cave_density;
+
+inline Noise<8> noise_cave_density1; // big caves
 // -- //
