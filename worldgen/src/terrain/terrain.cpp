@@ -11,111 +11,18 @@
 #include "common.hpp"
 #include "utils/easings.hpp"
 
-// void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-//     // if (chunkWorldPosition.y <= 0) {
-//     //     memset(blocks, 3, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE);
-//     // } else {
-//     //     memset(blocks, 0, CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE);
-//     // }
-//     // return;
-
-//     constexpr int SCALE = 2;
-//     constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
-//     float hmap[SIZE*SIZE];
-//     fn->GenUniformGrid2D(hmap, chunkWorldPosition.x / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, 0.01f * SCALE, 0);
-
-//     // float hmap[16*16];
-//     // generateHeights(hmap, chunkWorldPosition);
-
-//     // float cmap[SIZE*SIZE];
-//     // fn_celullarValue->GenUniformGrid2D(cmap, chunkWorldPosition.x , chunkWorldPosition.z , SIZE, SIZE, 0.0025f * SCALE, 0);
-
-//     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
-//     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
-//         float rawHeight = getGridAtScaled2<SIZE, SCALE>(hmap, dx, dz);
-//         float height = (2 + rawHeight) * 15.0f;
-//         // height += getGridAtScaled2<SIZE, SCALE>(cmap, dx, dz) * 40.0f;
-
-//         for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
-//             const int i = INDEX_XYZ(dx, dy, dz);
-//             // int iXZ = dz * CHUNK_SIZE + dx;
-//             // float height = hmap[iXZ];
-//             // float height = (2 + hmap[iXZ]) * 15.0f;
-
-//             glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
-
-//             if (blockWorldPosition.y >= height) {
-//                 blocks[i] = (uint8_t)BlockType::Air;
-//             } else if (blockWorldPosition.y >= height - 1.0f) {
-//                 blocks[i] = (uint8_t)BlockType::Grass;
-//             } else if (blockWorldPosition.y >= height - 5.0f) {
-//                 blocks[i] = (uint8_t)BlockType::Dirt;
-//             } else {
-//                 blocks[i] = (uint8_t)BlockType::Stone;
-//             }
-//         }
-//     }}
-// }
-
-// void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-//     if (chunkWorldPosition.y < -50) {
-//         memset(blocks, 3, CHUNK_BLOCK_COUNT);
-//         return;
-//     } else if (chunkWorldPosition.y > 200) {
-//         memset(blocks, 0, CHUNK_BLOCK_COUNT);
-//         return;
-//     }
-
-//     float terrainDensity[CHUNK_BLOCK_COUNT];
-//     fn_terrain->GenUniformGrid3D(terrainDensity, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 16, 16, 16, 0.004f, 1337);
-
-//     // float cmap[16*16];
-//     // fn_celullarValue->GenUniformGrid2D(cmap, chunkWorldPosition.x, chunkWorldPosition.z, 16, 16, 0.0025f, 0);
-
-//     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
-//     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
-//     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
-//         int i = INDEX_XYZ(dx, dy, dz);
-
-//         int iXZ = dz * CHUNK_SIZE + dx;
-
-//         glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
-
-//         float worldY = chunkWorldPosition.y + dy;
-//         float density = terrainDensity[i];
-
-//         float minFactor = -1.0f;// + mask * 0.1f;
-//         float maxFactor = 1.0f;// + mask * 0.1f;
-//         float heightFactor = glm::clamp(mapRange(worldY, -256, 256, minFactor, maxFactor), minFactor, maxFactor);
-//         float threshold = heightFactor;
-
-//         blocks[i] = threshold > density ? (uint8_t)BlockType::Air : (uint8_t)BlockType::Stone;
-
-//         // if (threshold > density) {
-//         //     blocks[i] = (uint8_t)BlockType::Air;
-//         // } else if (threshold > density - 0.005f) {
-//         //     blocks[i] = (uint8_t)BlockType::Grass;
-//         // } else if (threshold > density - 0.01f) {
-//         //     blocks[i] = (uint8_t)BlockType::Dirt;
-//         // } else {
-//         //     blocks[i] = (uint8_t)BlockType::Stone;
-//         // }
-//     }}}
-// }
-
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    // float v_continental[CHUNK_SIZE*CHUNK_SIZE];
-    // noise_continental->GenUniformGrid2D(v_continental, chunkWorldPosition.x, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
+    // float* v_continental = noise_continental.genGrid2D(chunkWorldPosition);
+    // float* v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
 
-    // float v_terrain_density[CHUNK_BLOCK_COUNT];
-    // noise_terrain_density->GenUniformGrid3D(v_terrain_density, chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE, 1.0f, 0);
-
-    float* v_continental = getNoiseCache(cache_noise_continental, chunkWorldPosition, 2, noise_continental);
-    float* v_terrain_density = getNoiseCache(cache_noise_terrain_density, chunkWorldPosition, 3, noise_terrain_density);
+    NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
+    NoiseData v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
-        float height = Easings::easeInOutQuint((v_continental[INDEX_XY(dx, dz)]));
+        // float height = Easings::easeInOutQuint((v_continental[INDEX_XY(dx, dz)]));
+        float height = Easings::easeInOutQuint(v_continental.get(dx, dz));
+
         float heightW = height * 200.0f + 16;
 
         for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -123,12 +30,12 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
             float worldY = chunkWorldPosition.y + dy;
             glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
 
-            float terrainDensity = v_terrain_density[i];
+            // float terrainDensity = v_terrain_density[i];
+            float terrainDensity = v_terrain_density.get(dx, dy, dz);
             float density = heightW + terrainDensity * 70.0f;// mapRange(terrainDensity, 0, 64, 0.0f, 0.5f);
 
             if (density > worldY) {
                 blocks[i] = (uint8_t)BlockType::Stone;
-                // blocks[i] = (uint8_t)BlockType::Grass;
             } else {
                 if (worldY < 0) {
                     blocks[i] = (uint8_t)BlockType::Water;
@@ -141,7 +48,7 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     }}
 }
 
-void generateStageSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
     for (int dy = 0 ; dy < CHUNK_SIZE-2 ; ++dy) {
@@ -155,51 +62,44 @@ void generateStageSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
 }
 
 
+void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    constexpr int SCALE = 2;
+    constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
+    constexpr int SIZE2 = SIZE*SIZE;
+    constexpr int SIZE3 = SIZE*SIZE*SIZE;
 
-// void generateStage2(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-//     constexpr int SCALE = 2;
-//     constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
-//     constexpr int SIZE2 = SIZE*SIZE;
-//     constexpr int SIZE3 = SIZE*SIZE*SIZE;
+    NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
+    NoiseData v_caveDensity = noise_cave_density.genGrid3D(chunkWorldPosition, 0.0085f);
 
-//     float hmap[SIZE2];
-//     fn->GenUniformGrid2D(hmap, chunkWorldPosition.x / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, 0.01f * SCALE, 0);
+    for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
+    for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
+        // float height = getGridAtScaled2<SIZE, SCALE>(hmap, x, z);
+        // float height = v_continental[INDEX_XY(x, z)] * 200.0f + 32;
+        float height = v_continental.get(x, z) * 200.0f + 32;
+        for (int y = 0 ; y < CHUNK_SIZE ; ++y) {
 
-//     // float hmap[16*16];
-//     // generateHeights(hmap, chunkWorldPosition);
+            int index = INDEX_XYZ(x, y, z);
+            float world_y = chunkWorldPosition.y + y;
 
-//     float caveDensity[SIZE3];
-//     fn_celullarDist->GenUniformGrid3D(caveDensity, chunkWorldPosition.x / SCALE, chunkWorldPosition.y / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, SIZE, 0.0085f * SCALE, 0);
+            if (world_y > height) continue;
 
-//     // float maskmap[SIZE3];
-//     // fn->GenUniformGrid3D(maskmap, chunkWorldPosition.x / SCALE, chunkWorldPosition.y / SCALE, chunkWorldPosition.z / SCALE, SIZE, SIZE, SIZE, 0.0025f * SCALE, 2434);
+            float minFactor = 0.84f;// + mask * 0.1f;
+            float maxFactor = 1.0f;// + mask * 0.1f;
+            float heightFactor = glm::max(minFactor, mapRange(world_y, -64, height, minFactor, maxFactor));
+            float threshold = heightFactor;// glm::max(heightFactor, maskmap[index] * 5.0f); // use max to not cover the map with caves
 
-//     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {
-//     for (int x = 0 ; x < CHUNK_SIZE ; ++x) {
-//         float height = getGridAtScaled2<SIZE, SCALE>(hmap, x, z);
-//         for (int y = 0 ; y < CHUNK_SIZE ; ++y) {
+            // float density = getGridAtScaled3<SIZE, SCALE>(caveDensity, x, y, z);
+            // float density = v_caveDensity[INDEX_XYZ(x, y, z)];
+            float density = v_caveDensity.get(x, y, z);
 
-//             int index = INDEX_XYZ(x, y, z);
-//             float world_y = chunkWorldPosition.y + y;
-
-//             if (world_y > height) continue;
-
-//             // float mask = getGridAtScaled3<SIZE, SCALE>(maskmap, x, y, z);
-
-//             float minFactor = 0.84f;// + mask * 0.1f;
-//             float maxFactor = 1.0f;// + mask * 0.1f;
-//             float heightFactor = glm::max(minFactor, mapRange(world_y, -64, height, minFactor, maxFactor));
-//             float threshold = heightFactor;// glm::max(heightFactor, maskmap[index] * 5.0f); // use max to not cover the map with caves
-
-//             float density = getGridAtScaled3<SIZE, SCALE>(caveDensity, x, y, z);
-
-//             if (density > threshold) {
-//             // if (caveDensity[index] > threshold) {
-//                 blocks[index] = (uint8_t)BlockType::Air;
-//             }
-//         }
-//     }}
-// }
+            if (density > threshold) {
+                if (blocks[index] != (uint8_t)BlockType::Water) {
+                    blocks[index] = (uint8_t)BlockType::Air;
+                }
+            }
+        }
+    }}
+}
 
 
 // static int findTopBlock(uint8_t* blocks, int localX, int localZ) {

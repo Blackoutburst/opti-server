@@ -41,13 +41,15 @@ const uint8_t tree[] = {
     0, 0, 0, 0, 0
 };
 
+#include <stdio.h>
+
 // xyz -> chunk world position
 static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     const int32_t TREE_BOTTOM_CENTER_X = 0;//2;
     const int32_t TREE_BOTTOM_CENTER_Z = 0;//2;
 
-    float random_X = 7;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
-    float random_Z = 7;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
+    float random_X = 0.5f;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
+    float random_Z = 0.5f;//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
 
     int TREE_X = (random_X * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_X);
     int TREE_Z = (random_Z * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_Z);
@@ -130,7 +132,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     #define LOW_Z -1
     #define HIGH_Z 1
 
-    if (glm::abs(chunkWorldPosition.y - (noise_continental->GenSingle2D(chunkWorldPosition.x, chunkWorldPosition.z, 0) * 200.0f + 16)) > 100) return; // if widely outside of approximate terrain height
+    if (glm::abs(chunkWorldPosition.y - (noise_continental.genSingle2D(chunkWorldPosition.x, chunkWorldPosition.z) * 200.0f + 16)) > 100) return; // if widely outside of approximate terrain height
 
     if (chunkWorldPosition.y < 0) return; // don't generated trees under sea level
 
@@ -147,7 +149,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
             if (spawn_point.x != -1) spawnPoints.push_back(spawn_point);
         } else {
             generateStage1(temp_chunk, other_chunkWorldPosition);
-            generateStageSurface(temp_chunk, other_chunkWorldPosition);
+            generateSurface(temp_chunk, other_chunkWorldPosition);
             glm::ivec3 spawn_point = findTreeSpawnpoint(temp_chunk, other_chunkWorldPosition);
             if (spawn_point.x != -1) spawnPoints.push_back(spawn_point + chunkOffset);
         }
