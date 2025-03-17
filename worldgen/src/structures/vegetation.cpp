@@ -136,6 +136,8 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
     if (chunkWorldPosition.y < 0) return; // don't generated trees under sea level
 
+    uint8_t temp_chunk[CHUNK_BLOCK_COUNT];
+
     for (int chunk_z = LOW_X ; chunk_z <= HIGH_X ; ++chunk_z) {
     for (int chunk_y = LOW_Y ; chunk_y <= HIGH_Y ; ++chunk_y) {
     for (int chunk_x = LOW_Z ; chunk_x <= HIGH_Z ; ++chunk_x) {
