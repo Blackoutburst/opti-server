@@ -29,7 +29,7 @@ using NoiseCache = std::unordered_map<glm::ivec3, float*>;
 template<int SCALE>
 class Noise {
     static constexpr int MAX_CACHE_SIZE = 1500;
-    static constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
+    static constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1; // TODO: if scale is equal to 1, don't need +1
 
 public:
     Noise() = default;
