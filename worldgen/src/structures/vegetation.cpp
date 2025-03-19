@@ -75,31 +75,6 @@ static void findTreeSpawnPoints(const uint8_t* blocks, std::vector<glm::ivec3>& 
     }
 }
 
-static glm::ivec3 findTreeSpawnpoint(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    const int32_t TREE_BOTTOM_CENTER_X = 0;//2;
-    const int32_t TREE_BOTTOM_CENTER_Z = 0;//2;
-
-    srand(chunkWorldPosition.x ^ chunkWorldPosition.y ^ chunkWorldPosition.z);
-
-    float random_X = glm::linearRand(0.0f, 1.0f);//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 0);
-    float random_Z = glm::linearRand(0.0f, 1.0f);//fn->GenSingle3D(chunkWorldPosition.x, chunkWorldPosition.y, chunkWorldPosition.z, 1);
-
-    int TREE_X = (random_X * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_X);
-    int TREE_Z = (random_Z * 0.5f + 0.5f) * (CHUNK_SIZE-1 - TREE_BOTTOM_CENTER_Z);
-
-    for (int32_t dy = CHUNK_SIZE - 2 ; dy >= 0 ; --dy) {
-        int prev_index = INDEX_XYZ(TREE_X+TREE_BOTTOM_CENTER_X, dy+1, TREE_Z+TREE_BOTTOM_CENTER_Z);
-        int index      = INDEX_XYZ(TREE_X+TREE_BOTTOM_CENTER_X, dy  , TREE_Z+TREE_BOTTOM_CENTER_Z);
-
-        // can only grow on grass
-        if (blocks[index] == 1 && blocks[prev_index] == 0) {
-            return {TREE_X, dy + 1, TREE_Z};
-        }
-    }
-
-    return {-1, -1, -1};
-}
-
 static void placeTree(uint8_t* blocks, const glm::ivec3& localPos, const glm::ivec3& chunkWorldPosition) {
     glm::ivec3 blockWorldPos = chunkWorldPosition + localPos;
     srand(blockWorldPos.x ^ blockWorldPos.y ^ blockWorldPos.z);
@@ -183,7 +158,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         } else {
             generateStage1(temp_chunk, other_chunkWorldPosition);
             generateSurface(temp_chunk, other_chunkWorldPosition);
-            generateCaves(temp_chunk, other_chunkWorldPosition);
+            // generateCaves(temp_chunk, other_chunkWorldPosition);
 
             findTreeSpawnPoints(temp_chunk, spawnPoints, other_chunkWorldPosition);
             for (auto& spawnPoint: spawnPoints) {
