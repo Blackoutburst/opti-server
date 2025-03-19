@@ -1,5 +1,5 @@
 #include <cstring>
-#include <stdio.h>
+// #include <stdio.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
@@ -45,7 +45,7 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
 void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     uint8_t top_chunk[CHUNK_BLOCK_COUNT];
-    generateStage1(top_chunk, chunkWorldPosition + glm::ivec3(0, 16, 0));
+    generateStage1(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0));
 
     // top layer
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {

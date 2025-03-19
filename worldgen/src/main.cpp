@@ -98,6 +98,18 @@ void init()
 
     noise_cave_density1.assign(c1_scale);
     // -- //
+
+    // trees //
+    auto tree = FastNoise::New<FastNoise::Simplex>();
+
+    auto treeScale = FastNoise::New<FastNoise::DomainAxisScale>();
+    treeScale->SetSource(tree);
+    treeScale->SetScale<FastNoise::Dim::X>(0.005f);
+    treeScale->SetScale<FastNoise::Dim::Y>(0.005f);
+    treeScale->SetScale<FastNoise::Dim::Z>(0.005f);
+
+    noise_tree_density.assign(treeScale);
+    // -- //
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
