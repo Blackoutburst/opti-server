@@ -11,6 +11,8 @@
 #include "common.hpp"
 #include "utils/easings.hpp"
 
+#include "generationStage.hpp"
+
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
     NoiseData v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
@@ -18,7 +20,6 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
         float height = Easings::easeInOutQuint(v_continental.get(dx, dz));
-
         float heightW = height * 200.0f + 16;
 
         for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -45,7 +46,7 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
 void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     uint8_t top_chunk[CHUNK_BLOCK_COUNT];
-    generateStage1(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0));
+    generateStages(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0), GenerationStage::Terrain);
 
     // top layer
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
@@ -71,11 +72,20 @@ void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 }
 
 
+// exponential
+// float smin( float a, float b, float k )
+// {
+//     k *= 1.0;
+//     float r = glm::exp2(-a/k) + glm::exp2(-b/k); // Profiling says that exp2 is slow
+//     return -k*glm::log2(r);
+// }
+
+// quadratic polynomial (faster)
 float smin( float a, float b, float k )
 {
-    k *= 1.0;
-    float r = glm::exp2(-a/k) + glm::exp2(-b/k);
-    return -k*glm::log2(r);
+    k *= 4.0;
+    float h = glm::max( k-glm::abs(a-b), 0.0f )/k;
+    return glm::min(a,b) - h*h*k*(1.0f/4.0f);
 }
 
 void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
@@ -86,7 +96,6 @@ void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
     NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
     NoiseData v_caveDensity = noise_cave_density.genGrid3D(chunkWorldPosition, 0.0085f);
-
     NoiseData v_caveBig = noise_cave_density1.genGrid3D(chunkWorldPosition, 0.006f);
 
     for (int z = 0 ; z < CHUNK_SIZE ; ++z) {

@@ -13,6 +13,7 @@
 #include "terrain/terrain.hpp"
 #include "structures/vegetation.hpp"
 #include "utils/NoiseWrapper.hpp"
+#include "generationStage.hpp"
 
 void init()
 {
@@ -115,8 +116,10 @@ void init()
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
-    generateStage1(blocks, chunkWorldPos);
-    generateSurface(blocks, chunkWorldPos);
-    generateCaves(blocks, chunkWorldPos);
-    generateTrees(blocks, chunkWorldPos);
+    generateStages(blocks, chunkWorldPos, GenerationStage::All);
+
+    // generateStage1(blocks, chunkWorldPos);
+    // generateSurface(blocks, chunkWorldPos);
+    // generateCaves(blocks, chunkWorldPos);
+    // generateTrees(blocks, chunkWorldPos);
 }

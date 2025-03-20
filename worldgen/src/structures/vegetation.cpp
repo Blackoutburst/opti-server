@@ -5,6 +5,7 @@
 #include "structures/vegetation.hpp"
 #include "common.hpp"
 #include "terrain/terrain.hpp"
+#include "generationStage.hpp"
 
 const uint32_t TREE_X_SIZE = 5;
 const uint32_t TREE_Y_SIZE = 5;
@@ -156,9 +157,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         if (chunk_x == 0 && chunk_y == 0 && chunk_z == 0) {
             findTreeSpawnPoints(blocks, spawnPoints, other_chunkWorldPosition);
         } else {
-            generateStage1(temp_chunk, other_chunkWorldPosition);
-            generateSurface(temp_chunk, other_chunkWorldPosition);
-            generateCaves(temp_chunk, other_chunkWorldPosition);
+            generateStages(temp_chunk, other_chunkWorldPosition, GenerationStage::Caves);
 
             findTreeSpawnPoints(temp_chunk, spawnPoints, other_chunkWorldPosition);
             for (auto& spawnPoint: spawnPoints) {
