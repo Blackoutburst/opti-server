@@ -46,7 +46,7 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
 void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     uint8_t top_chunk[CHUNK_BLOCK_COUNT];
-    generateStages(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0), GenerationStage::Terrain);
+    generateStages<GenerationStage::Terrain>(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0));
 
     // top layer
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {

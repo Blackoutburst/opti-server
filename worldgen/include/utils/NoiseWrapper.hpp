@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -89,7 +90,7 @@ public:
     }
 
 private:
-    void cleanCache(NoiseCache& cache) {
+    void cleanCache(NoiseCache& cache) { // TODO: Fix code to works multithreaded
         for (const auto& it : cache) {
             free(it.second);
         }

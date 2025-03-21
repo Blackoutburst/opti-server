@@ -157,7 +157,7 @@ void generateTrees(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         if (chunk_x == 0 && chunk_y == 0 && chunk_z == 0) {
             findTreeSpawnPoints(blocks, spawnPoints, other_chunkWorldPosition);
         } else {
-            generateStages(temp_chunk, other_chunkWorldPosition, GenerationStage::Caves);
+            generateStages<GenerationStage::Caves>(temp_chunk, other_chunkWorldPosition);
 
             findTreeSpawnPoints(temp_chunk, spawnPoints, other_chunkWorldPosition);
             for (auto& spawnPoint: spawnPoints) {

@@ -116,7 +116,7 @@ void init()
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
-    generateStages(blocks, chunkWorldPos, GenerationStage::All);
+    generateStages<GenerationStage::All>(blocks, chunkWorldPos);
 
     // generateStage1(blocks, chunkWorldPos);
     // generateSurface(blocks, chunkWorldPos);
