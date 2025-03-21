@@ -1,17 +1,15 @@
-#include <cstring>
-// #include <stdio.h>
+// #include <cstring>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <glm/gtc/random.hpp>
 
+#include "common.hpp"
+#include "generationStage.hpp"
 #include "terrain/terrain.hpp"
 #include "utils/grid.hpp"
-#include "common.hpp"
 #include "utils/easings.hpp"
-
-#include "generationStage.hpp"
 
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);

@@ -1,11 +1,10 @@
-// #include <stdio.h>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtc/random.hpp>
 
-#include "structures/vegetation.hpp"
 #include "common.hpp"
-#include "terrain/terrain.hpp"
 #include "generationStage.hpp"
+#include "structures/vegetation.hpp"
+#include "terrain/terrain.hpp"
 
 const uint32_t TREE_X_SIZE = 5;
 const uint32_t TREE_Y_SIZE = 5;

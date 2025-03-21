@@ -1,11 +1,10 @@
 #pragma once
 
-#include <stdio.h>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <FastNoise/FastNoise.h>
-
+#include "grid.hpp"
 #include "chunk.hpp"
 
 template<int SIZE, int SCALE>

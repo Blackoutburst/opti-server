@@ -1,18 +1,7 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <iostream>
-#include <thread>
-
+#include <cstdint>
 #include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
-#include "glm/gtx/hash.hpp"
-#include "glm/gtc/random.hpp"
-
 #include "main.hpp"
 #include "common.hpp"
-#include "terrain/terrain.hpp"
-#include "structures/vegetation.hpp"
-#include "utils/NoiseWrapper.hpp"
 #include "generationStage.hpp"
 
 void init()
@@ -117,9 +106,4 @@ void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
     generateStages<GenerationStage::All>(blocks, chunkWorldPos);
-
-    // generateStage1(blocks, chunkWorldPos);
-    // generateSurface(blocks, chunkWorldPos);
-    // generateCaves(blocks, chunkWorldPos);
-    // generateTrees(blocks, chunkWorldPos);
 }

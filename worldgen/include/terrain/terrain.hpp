@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <glm/glm.hpp>
+#include <glm/ext/vector_int3.hpp>
 
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);
 void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);
