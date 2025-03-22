@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("clatest", "c++20")
+set_languages("clatest", "c++23")
 
 target("server")
     set_kind("binary")
