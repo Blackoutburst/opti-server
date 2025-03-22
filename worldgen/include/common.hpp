@@ -1,13 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <FastNoise/FastNoise.h>
 
 #include "utils/NoiseWrapper.hpp"
-#include "chunk.hpp"
 
 enum class BlockType : uint8_t {
     Air = 0,

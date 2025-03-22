@@ -1,5 +1,3 @@
-// #include <cstring>
-
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -8,7 +6,6 @@
 #include "common.hpp"
 #include "generationStage.hpp"
 #include "terrain/terrain.hpp"
-#include "utils/grid.hpp"
 #include "utils/easings.hpp"
 
 void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {

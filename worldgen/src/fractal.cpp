@@ -1,3 +1,6 @@
+#define GLM_FORCE_SWIZZLE
+#include "glm/geometric.hpp"
+
 #include "fractal.hpp"
 
 // float de(glm::vec3 p){  //(distance bound doesn't hold)

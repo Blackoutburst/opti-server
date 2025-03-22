@@ -6,9 +6,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-#include "common.hpp"
 #include "terrain/terrain.hpp"
 #include "structures/vegetation.hpp"
+#include "chunk.hpp"
 
 enum class GenerationStage: uint8_t {
     Terrain,
