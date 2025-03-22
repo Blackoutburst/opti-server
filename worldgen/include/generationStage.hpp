@@ -26,17 +26,23 @@ template <GenerationStage stage>
 inline void _generateStage(uint8_t* blocks, const glm::ivec3& chunkWorldPos, generationFunction func)
 {
     const auto key = glm::ivec4(chunkWorldPos, stage);
-    const auto it = _cache.find(key);
-    if (it != _cache.end()) {
-        memcpy(blocks, it->second, CHUNK_BLOCK_COUNT);
-        return;
+    {
+        // lock shared
+        const auto it = _cache.find(key);
+        if (it != _cache.end()) {
+            memcpy(blocks, it->second, CHUNK_BLOCK_COUNT);
+            return;
+        }
     }
 
     func(blocks, chunkWorldPos);
 
     uint8_t* p = (uint8_t*)malloc(CHUNK_BLOCK_COUNT * sizeof(uint8_t));
     memcpy(p, blocks, CHUNK_BLOCK_COUNT);
+
+    // lock
     _cache[key] = p;
+    // unlock
 }
 
 template <GenerationStage stage>

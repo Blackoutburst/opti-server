@@ -55,36 +55,46 @@ public:
     }
 
     NoiseData<SIZE, SCALE> genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
+        // lock shared
         const auto it = _cache2D.find(pos);
         if (it != _cache2D.end()) {
             return NoiseData<SIZE, SCALE>(it->second);
         }
-
-        if (_cache2D.size() > MAX_CACHE_SIZE) {
-            cleanCache(_cache2D);
-        }
+        // unlock shared
 
         float* v = (float*)malloc(SIZE*SIZE * sizeof(float));
         _noise->GenUniformGrid2D(v, pos.x / SCALE, pos.z / SCALE, SIZE, SIZE, frequency * SCALE, _seed);
 
+        // lock
+        if (_cache2D.size() > MAX_CACHE_SIZE) {
+            cleanCache(_cache2D);
+        }
         _cache2D[pos] = v;
+        // unlock
+
         return NoiseData<SIZE, SCALE>(v);
     }
 
     NoiseData<SIZE, SCALE> genGrid3D(const glm::ivec3& pos, float frequency = 1.0f) {
+
+        // shared lock
         const auto it = _cache3D.find(pos);
         if (it != _cache3D.end()) {
             return NoiseData<SIZE, SCALE>(it->second);
         }
-
-        if (_cache3D.size() > MAX_CACHE_SIZE) {
-            cleanCache(_cache3D);
-        }
+        // unlock shared
 
         float* v = (float*)malloc(SIZE*SIZE*SIZE * sizeof(float));
         _noise->GenUniformGrid3D(v, pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
 
+        // lock
+        if (_cache3D.size() > MAX_CACHE_SIZE) {
+            cleanCache(_cache3D);
+        }
+
         _cache3D[pos] = v;
+        // unlock
+
         return NoiseData<SIZE, SCALE>(v);
     }
 
