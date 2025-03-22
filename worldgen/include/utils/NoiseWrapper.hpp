@@ -12,11 +12,11 @@ class NoiseData {
 public:
     NoiseData(float* data): _data(data) {}
 
-    float get(int x, int y) {
+    float get(int x, int y) const {
         return getGridAtScaled2<SIZE, SCALE>(_data, x, y);
     }
 
-    float get(int x, int y, int z) {
+    float get(int x, int y, int z) const {
         return getGridAtScaled3<SIZE, SCALE>(_data, x, y, z);
     }
 
@@ -46,11 +46,11 @@ public:
         _seed = seed;
     }
 
-    float genSingle2D(int x, int y) {
+    float genSingle2D(int x, int y) const {
         return _noise->GenSingle2D(x, y, _seed);
     }
 
-    float genSingle3D(int x, int y, int z) {
+    float genSingle3D(int x, int y, int z) const  {
         return _noise->GenSingle3D(x, y, z, _seed);
     }
 
