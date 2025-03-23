@@ -6,14 +6,14 @@ https://github.com/user-none/poddown/blob/master/src/cpthread.h
 #ifndef __CPTHREAD_H__
 #define __CPTHREAD_H__
 
-#ifdef _WIN32
+#if !__has_include (<pthread.h>)
 # include <stdbool.h>
 # include <windows.h>
 #else
 # include <pthread.h>
 #endif
 
-#ifdef _WIN32
+#if !__has_include (<pthread.h>)
 typedef CRITICAL_SECTION pthread_mutex_t;
 typedef void pthread_mutexattr_t;
 typedef void pthread_condattr_t;
@@ -33,7 +33,7 @@ struct timespec {
 
 #endif
 
-#ifdef _WIN32
+#if !__has_include (<pthread.h>)
 int pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine)(void *), void *arg);
 int pthread_join(pthread_t thread, void **value_ptr);
 int pthread_detach(pthread_t);
@@ -59,8 +59,7 @@ int pthread_rwlock_trywrlock(pthread_rwlock_t  *rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
 #endif
 
-unsigned int pcthread_get_num_procs();
-
-void ms_to_timespec(struct timespec *ts, unsigned int ms);
+// unsigned int pcthread_get_num_procs();
+// void ms_to_timespec(struct timespec *ts, unsigned int ms);
 
 #endif /* __CPTHREAD_H__ */

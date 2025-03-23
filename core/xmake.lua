@@ -11,7 +11,8 @@ target("server")
     add_files("src/*.c", "src/**/*.c")
 
     if is_host("windows") then
-        add_ldflags("-Llib -lws2_32")
+        add_ldflags("-Llib -lws2_32 -lpthread")
+        add_defines("WIN32_LEAN_AND_MEAN")
     end
 
     if is_host("linux") then

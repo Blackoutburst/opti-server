@@ -1,6 +1,6 @@
 #include "utils/cpthread.h"
 
-#ifdef _WIN32
+#if !__has_include(<pthread.h>)
 
 typedef struct {
     void *(*start_routine)(void *);
@@ -213,28 +213,28 @@ int pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 
 #endif
 
-#ifdef _WIN32
-unsigned int pcthread_get_num_procs()
-{
-    SYSTEM_INFO sysinfo;
+// #ifdef _WIN32
+// unsigned int pcthread_get_num_procs()
+// {
+//     SYSTEM_INFO sysinfo;
 
-    GetSystemInfo(&sysinfo);
-    return sysinfo.dwNumberOfProcessors;
-}
+//     GetSystemInfo(&sysinfo);
+//     return sysinfo.dwNumberOfProcessors;
+// }
 
-#else
+// #else
 
-#include <unistd.h>
-unsigned int pcthread_get_num_procs()
-{
-    return (unsigned int)sysconf(_SC_NPROCESSORS_ONLN);
-}
-#endif
+// #include <unistd.h>
+// unsigned int pcthread_get_num_procs()
+// {
+//     return (unsigned int)sysconf(_SC_NPROCESSORS_ONLN);
+// }
+// #endif
 
-void ms_to_timespec(struct timespec *ts, unsigned int ms)
-{
-    if (ts == NULL)
-        return;
-    ts->tv_sec = (ms / 1000) + time(NULL);
-    ts->tv_nsec = (ms % 1000) * 1000000;
-}
+// void ms_to_timespec(struct timespec *ts, unsigned int ms)
+// {
+//     if (ts == NULL)
+//         return;
+//     ts->tv_sec = (ms / 1000) + time(NULL);
+//     ts->tv_nsec = (ms % 1000) * 1000000;
+// }
