@@ -5,6 +5,7 @@
 #include "common.hpp"
 #include "generationStage.hpp"
 #include "structures/vegetation.hpp"
+#include "utils/threadsafe_random.hpp"
 
 const uint32_t TREE_X_SIZE = 5;
 const uint32_t TREE_Y_SIZE = 5;
@@ -61,11 +62,11 @@ static void findTreeSpawnPoints(const uint8_t* blocks, std::vector<glm::ivec3>& 
     float n = noise_tree_density.genSingle2D(chunkWorldPosition.x, chunkWorldPosition.z);
     int treeCount = n > 0.0f ? n * 2 : 0;
 
-    srand(chunkWorldPosition.x ^ chunkWorldPosition.y ^ chunkWorldPosition.z);
+    threadSafeRandomGenerator::seed(chunkWorldPosition.x ^ chunkWorldPosition.y ^ chunkWorldPosition.z);
 
     for (int i = 0 ; i < treeCount ; ++i) {
-        float random_X = glm::linearRand(0.0f, 1.0f);
-        float random_Z = glm::linearRand(0.0f, 1.0f);
+        float random_X = threadSafeRandomGenerator::rand();
+        float random_Z = threadSafeRandomGenerator::rand();
 
         int tree_X = random_X * (CHUNK_SIZE-1);
         int tree_Z = random_Z * (CHUNK_SIZE-1);
@@ -77,10 +78,11 @@ static void findTreeSpawnPoints(const uint8_t* blocks, std::vector<glm::ivec3>& 
 
 static void placeTree(uint8_t* blocks, const glm::ivec3& localPos, const glm::ivec3& chunkWorldPosition) {
     glm::ivec3 blockWorldPos = chunkWorldPosition + localPos;
-    srand(blockWorldPos.x ^ blockWorldPos.y ^ blockWorldPos.z);
 
-    int leavesBottom = glm::linearRand(3, 4);
-    int height = glm::linearRand(8, 30);
+    threadSafeRandomGenerator::seed(blockWorldPos.x ^ blockWorldPos.y ^ blockWorldPos.z);
+
+    int leavesBottom = threadSafeRandomGenerator::randLinear(3, 4);
+    int height = threadSafeRandomGenerator::randLinear(8, 30);
     int leavesWidth = height / 4;
     int trunkWidth = 1;
 
@@ -121,7 +123,7 @@ static void placeTree(uint8_t* blocks, const glm::ivec3& localPos, const glm::iv
             // if (sqDistFromTrunk - trunkRadius*trunkRadius - 0.5 > width*width + trunkWidth*trunkWidth + 0.5) continue; // -1.5 for better roundness
 
             const int decayChance = 4;
-            if (rand() % 10 < sqDistFromTrunk - (width*width) + decayChance) continue;
+            if (threadSafeRandomGenerator::randLinear(0, 10) < sqDistFromTrunk - (width*width) + decayChance) continue;
 
             setBlock(blocks, 5, localPos.x + x, localPos.y + y, localPos.z + z);
         }}

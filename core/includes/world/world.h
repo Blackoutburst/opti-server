@@ -1,7 +1,6 @@
 #pragma once
 
 #include "utils/types.h"
-#include "utils/vector.h"
 #include "world/chunk.h"
 #include "network/server.h"
 #include "cc/cc.h"

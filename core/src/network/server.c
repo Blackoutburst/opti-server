@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "utils/math.h"
 #include "utils/logger.h"
 #include "utils/string.h"
 #include "utils/mutex.h"

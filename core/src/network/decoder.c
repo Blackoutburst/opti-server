@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "utils/buffer.h"
 #include "network/decoder.h"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <shared_mutex>
 #include <string.h>
 #include <functional>
 #include <glm/glm.hpp>
@@ -18,7 +19,10 @@ enum class GenerationStage: uint8_t {
     All
 };
 
+// Server is leaking memory
+
 inline std::unordered_map<glm::ivec4, uint8_t*> _cache;
+inline std::shared_mutex _cache_mutex;
 
 using generationFunction = std::function<void(uint8_t*, const glm::ivec3&)>;
 
@@ -27,7 +31,7 @@ inline void _generateStage(uint8_t* blocks, const glm::ivec3& chunkWorldPos, gen
 {
     const auto key = glm::ivec4(chunkWorldPos, stage);
     {
-        // lock shared
+        const std::shared_lock<std::shared_mutex> lock(_cache_mutex);
         const auto it = _cache.find(key);
         if (it != _cache.end()) {
             memcpy(blocks, it->second, CHUNK_BLOCK_COUNT);
@@ -37,22 +41,28 @@ inline void _generateStage(uint8_t* blocks, const glm::ivec3& chunkWorldPos, gen
 
     func(blocks, chunkWorldPos);
 
+    // NOTE: only cache stage Terrain, caves or surface (because they are the only being reused during generation)
+    if (!(stage == GenerationStage::Terrain || stage == GenerationStage::Caves || stage == GenerationStage::Surface)) return;
+
+
     uint8_t* p = (uint8_t*)malloc(CHUNK_BLOCK_COUNT * sizeof(uint8_t));
     memcpy(p, blocks, CHUNK_BLOCK_COUNT);
 
-    // lock
+    const std::lock_guard<std::shared_mutex> lock(_cache_mutex);
     _cache[key] = p;
-    // unlock
 }
 
 template <GenerationStage stage>
 void generateStages(uint8_t* blocks, const glm::ivec3& chunkWorldPos) {
     constexpr size_t MAX_CACHE_SIZE = 20'000;
+
     if (_cache.size() > MAX_CACHE_SIZE) {
+        _cache_mutex.lock();
         for (const auto& it : _cache) {
             free(it.second);
         }
         _cache.clear();
+        _cache_mutex.unlock();
     }
 
     if (stage >= GenerationStage::Terrain)

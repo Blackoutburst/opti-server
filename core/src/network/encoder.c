@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "network/encoder.h"
 #include "utils/buffer.h"
 #include "world/chunk.h"
