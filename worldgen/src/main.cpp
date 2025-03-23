@@ -1,63 +1,11 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <iostream>
-#include <thread>
-
+#include <cstdint>
 #include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
-#include "glm/gtx/hash.hpp"
-#include "glm/gtc/random.hpp"
-
 #include "main.hpp"
 #include "common.hpp"
-#include "terrain/terrain.hpp"
-#include "structures/vegetation.hpp"
+#include "generationStage.hpp"
 
 void init()
 {
-    // fn = FastNoise::New<FastNoise::Perlin>();
-    fn = FastNoise::New<FastNoise::Simplex>();
-    fn_celullarValue = FastNoise::New<FastNoise::CellularValue>();
-
-    // Cave //
-    FastNoise::SmartNode<FastNoise::CellularDistance> c = FastNoise::New<FastNoise::CellularDistance>();
-    c->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Div1);
-    c->SetDistanceFunction(FastNoise::DistanceFunction::EuclideanSquared);
-    c->SetDistanceIndex0(1);
-    c->SetDistanceIndex1(3);
-
-    auto domainWarp = FastNoise::New<FastNoise::DomainWarpGradient>();
-    domainWarp->SetSource(c);
-    domainWarp->SetWarpAmplitude(0.2f);
-    domainWarp->SetWarpFrequency(4.0f);
-
-    auto domainScale = FastNoise::New<FastNoise::DomainAxisScale>();
-    domainScale->SetSource(domainWarp);
-    domainScale->SetScale<FastNoise::Dim::Y>(1.4f);
-
-    fn_celullarDist = domainScale;
-    // -- //
-
-    // auto terrain = FastNoise::New<FastNoise::Perlin>();
-    auto terrain = FastNoise::New<FastNoise::CellularDistance>();
-    terrain->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Mul1);
-    terrain->SetDistanceFunction(FastNoise::DistanceFunction::EuclideanSquared);
-
-    auto warp_terrain = FastNoise::New<FastNoise::DomainWarpGradient>();
-    warp_terrain->SetSource(terrain);
-    warp_terrain->SetWarpAmplitude(0.02f);
-    warp_terrain->SetWarpFrequency(16.0f);
-
-    auto fract_terrain = FastNoise::New<FastNoise::FractalFBm>();
-    fract_terrain->SetSource(warp_terrain);
-    fract_terrain->SetOctaveCount(3);
-    fract_terrain->SetGain(0.5f);
-    fract_terrain->SetLacunarity(2.0f);
-    fract_terrain->SetWeightedStrength(0.5f);
-
-    fn_terrain = fract_terrain;
-
-
     // Continental //
     auto f1 = FastNoise::New<FastNoise::Simplex>();
     auto f1_scale = FastNoise::New<FastNoise::DomainAxisScale>();
@@ -73,7 +21,7 @@ void init()
     f1_scale_fract->SetLacunarity(2.0f);
     f1_scale_fract->SetWeightedStrength(0.5f);
 
-    noise_continental = f1_scale_fract;
+    noise_continental.assign(f1_scale_fract);
     // -- //
 
     // Terrain density //
@@ -100,15 +48,62 @@ void init()
     f2_scale->SetScale<FastNoise::Dim::Y>(0.01f);
     f2_scale->SetScale<FastNoise::Dim::Z>(0.01f);
 
-    noise_terrain_density = f2_scale;
+    noise_terrain_density.assign(f2_scale);
+    // -- //
+
+    // Cave //
+    auto c = FastNoise::New<FastNoise::CellularDistance>();
+    c->SetReturnType(FastNoise::CellularDistance::ReturnType::Index0Div1);
+    c->SetDistanceFunction(FastNoise::DistanceFunction::EuclideanSquared);
+    c->SetDistanceIndex0(1);
+    c->SetDistanceIndex1(3);
+
+    auto domainScale = FastNoise::New<FastNoise::DomainAxisScale>();
+    domainScale->SetSource(c);
+    domainScale->SetScale<FastNoise::Dim::X>(0.6f);
+    domainScale->SetScale<FastNoise::Dim::Y>(1.2f);
+    domainScale->SetScale<FastNoise::Dim::Z>(0.6f);
+
+    auto domainWarp = FastNoise::New<FastNoise::DomainWarpGradient>();
+    domainWarp->SetSource(domainScale);
+    domainWarp->SetWarpAmplitude(0.2f);
+    domainWarp->SetWarpFrequency(4.0f);
+
+    noise_cave_density.assign(domainWarp);
+    // -- //
+
+    // big caves //
+    auto c1 = FastNoise::New<FastNoise::Simplex>();
+
+    auto c1_fract = FastNoise::New<FastNoise::FractalFBm>();
+    c1_fract->SetSource(c1);
+    c1_fract->SetOctaveCount(4);
+    c1_fract->SetGain(0.5f);
+    c1_fract->SetLacunarity(2.0f);
+    c1_fract->SetWeightedStrength(0.5f);
+
+    auto c1_scale = FastNoise::New<FastNoise::DomainAxisScale>();
+    c1_scale->SetSource(c1_fract);
+    c1_scale->SetScale<FastNoise::Dim::Y>(2.0f);
+
+    noise_cave_density1.assign(c1_scale);
+    // -- //
+
+    // trees //
+    auto tree = FastNoise::New<FastNoise::Simplex>();
+
+    auto treeScale = FastNoise::New<FastNoise::DomainAxisScale>();
+    treeScale->SetSource(tree);
+    treeScale->SetScale<FastNoise::Dim::X>(0.005f);
+    treeScale->SetScale<FastNoise::Dim::Y>(0.005f);
+    treeScale->SetScale<FastNoise::Dim::Z>(0.005f);
+
+    noise_tree_density.assign(treeScale);
     // -- //
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {
     const glm::ivec3 chunkWorldPos = {x, y, z};
 
-    generateStage1(blocks, chunkWorldPos);
-    generateStageSurface(blocks, chunkWorldPos);
-    // generateStage2(blocks, chunkWorldPos);
-    generateTrees(blocks, chunkWorldPos);
+    generateStages<GenerationStage::All>(blocks, chunkWorldPos);
 }

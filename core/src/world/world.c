@@ -1,12 +1,44 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "utils/math.h"
 #include "world/world.h"
 #include "network/client.h"
-#include "utils/math.h"
 #include "database/database.h"
-#include "utils/logger.h"
+#include "utils/math.h"
+#include "utils/tpool.h"
+#include "world/chunk.h"
 #include "utils/perfTimer.h"
+#include "utils/cpthread.h"
+// #include "utils/logger.h"
+
+
+// -- MULTITHREADING -- //
+// TODO: put this stuff elsewhere to make it work for multiple players
+static tpool_t* thread_pool = NULL;
+static vec(CHUNK*) chunks_generated;
+static pthread_mutex_t chunks_generated_mutex;
+
+// typedef struct funcArg funcArg_t;
+// struct funcArg {
+//     I32 x;
+//     I32 y;
+//     I32 z;
+//     U8* blocks;
+// };
+
+static void func(void* args) {
+    int x = ((int*)args)[0];
+    int y = ((int*)args)[1];
+    int z = ((int*)args)[2];
+
+    CHUNK* c = chunkCreate(x, y, z);
+
+    pthread_mutex_lock(&chunks_generated_mutex);
+    push(&chunks_generated, c);
+    pthread_mutex_unlock(&chunks_generated_mutex);
+
+    free(args);
+}
+// -- //
 
 
 U8 worldGetChunk(TCP_CLIENT* client, I32 x, I32 y, I32 z) {
@@ -58,6 +90,14 @@ void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client) {
 void worldUpdateClientChunk(TCP_CLIENT* client) {
     if (client == NULL) return;
 
+    static int a = 0;
+    if (a == 0) {
+        a = 1;
+        thread_pool = tpool_create(16);
+        init(&chunks_generated);
+        pthread_mutex_init(&chunks_generated_mutex, NULL);
+    }
+
     worldRemoveChunkOutOfRenderDistance(client);
 
     I32 px = TO_CHUNK_POS((I32)client->position.x);
@@ -79,13 +119,9 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 newbbminZ = pz - rd;
     I32 newbbmaxZ = pz + rd;
 
-    I32 a_dx = (px - client->chunkPosition.x);
-    I32 a_dy = (py - client->chunkPosition.y);
-    I32 a_dz = (pz - client->chunkPosition.z);
-
-    I32 bx = a_dx;// / 16;
-    I32 by = a_dy;// / 16;
-    I32 bz = a_dz;// / 16;
+    I32 dx = (px - client->chunkPosition.x);
+    I32 dy = (py - client->chunkPosition.y);
+    I32 dz = (pz - client->chunkPosition.z);
 
     // logD("chunkPosition %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("%d %d %d", bx, by, bz);
@@ -97,9 +133,9 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
 
-    if (bx != 0) {
-        I32 minX = bx > 0 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
-        I32 maxX = bx > 0 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
+    if (dx != 0) {
+        I32 minX = dx > 0 ? MAX(newbbminX, oldbbmaxX) : MIN(newbbminX, oldbbminX);
+        I32 maxX = dx > 0 ? MAX(newbbmaxX, oldbbmaxX) : MIN(newbbmaxX, oldbbminX);
 
         // logD("minX: %d, maxX: %d - %d", minX, maxX, maxX - minX);
         // int volume = (maxX - minX) * (newbbmaxY - newbbminY) * (newbbmaxZ - newbbminZ);
@@ -108,9 +144,9 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, minX, maxX, newbbminY, newbbmaxY, newbbminZ, newbbmaxZ);
     }
 
-    if (by != 0) {
-        I32 minY = by > 0 ? MAX(newbbminY, oldbbmaxY) : MIN(newbbminY, oldbbminY);
-        I32 maxY = by > 0 ? MAX(newbbmaxY, oldbbmaxY) : MIN(newbbmaxY, oldbbminY);
+    if (dy != 0) {
+        I32 minY = dy > 0 ? MAX(newbbminY, oldbbmaxY) : MIN(newbbminY, oldbbminY);
+        I32 maxY = dy > 0 ? MAX(newbbmaxY, oldbbmaxY) : MIN(newbbmaxY, oldbbminY);
 
         // logD("minY: %d, maxY: %d - %d", minY, maxY, maxY - minY);
         // int volume = (newbbmaxX - newbbminX) * (maxY - minY) * (newbbmaxZ - newbbminZ);
@@ -119,9 +155,9 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         dbGetChunksInRegion(client, newbbminX, newbbmaxX, minY, maxY, newbbminZ, newbbmaxZ);
     }
 
-    if (bz != 0) {
-        I32 minZ = bz > 0 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
-        I32 maxZ = bz > 0 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
+    if (dz != 0) {
+        I32 minZ = dz > 0 ? MAX(newbbminZ, oldbbmaxZ) : MIN(newbbminZ, oldbbminZ);
+        I32 maxZ = dz > 0 ? MAX(newbbmaxZ, oldbbmaxZ) : MIN(newbbmaxZ, oldbbminZ);
 
         // logD("minZ: %d, maxZ: %d - %d", minZ, maxZ, maxZ - minZ);
         // int volume = (newbbmaxX - newbbminX) * (newbbmaxY - newbbminY) * (maxZ - minZ);
@@ -133,7 +169,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     CHUNK** chunksToAdd = malloc(sizeof(CHUNK*) * CUBE(2 * client->renderDistance));
     U32 addIndex = 0;
 
-    // perfTimerBegin("worldUpdateClientChunk");
+    perfTimerBegin("worldUpdateClientChunk");
 
     // Do not use <= or it will not match the above code
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
@@ -147,8 +183,14 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
         CHUNK* c = NULL;
         if (data == NULL) {
-            c = chunkCreate(x, y, z);
-            chunksToAdd[addIndex++] = c;
+            // c = chunkCreate(x, y, z);
+            // chunksToAdd[addIndex++] = c;
+            int* p = malloc(3 * sizeof(int));
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
+            tpool_add_work(thread_pool, func, p);
+            continue;
         } else {
             c = chunkAssemble(x, y, z, *data);
         }
@@ -166,10 +208,28 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         if (data != NULL) {  // Clean if chunk was already in db
             chunkClean(c);
         }
-
     }}}
 
-    // perfTimerEnd();
+
+    tpool_wait(thread_pool); // TODO: just lock the list instead of waiting
+    for_each(&chunks_generated, c) {
+        chunksToAdd[addIndex++] = *c;
+
+        worldAddChunk(client, *c);
+
+        if (!chunkIsEmpty(*c)) {
+            if (chunkIsMonotype(*c)) {
+                clientSendMonotypeChunk(client, *c);
+            } else {
+                clientSendChunk(client, *c);
+            }
+        }
+
+    }
+    clear(&chunks_generated);
+
+
+    perfTimerEnd();
 
     clear(&client->dbChunks);
 

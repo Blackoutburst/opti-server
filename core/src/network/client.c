@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 #include "utils/args.h"
-#include "utils/buffer.h"
 #include "utils/string.h"
 #include "utils/math.h"
 #include "utils/logger.h"

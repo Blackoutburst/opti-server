@@ -54,6 +54,7 @@ target("worldgen")
     set_prefixname("") -- To remove the prefix lib of shared library
     set_kind("shared")
     add_defines("MYLIB_EXPORTS")
+    add_defines("FASTNOISE_STATIC_LIB")
 
     add_includedirs("include")
 
@@ -65,6 +66,15 @@ target("worldgen")
 
     add_packages("fastnoise2")
     add_packages("glm")
+
+    if is_mode("debug") then
+        set_policy("build.sanitizer.address", true)
+        add_cxflags("-g3", "-fno-omit-frame-pointer")
+    end
+
+    if is_mode("release") then
+        set_policy("build.sanitizer.address", false)
+    end
 
     after_build(function (target)
         print("Built target: %s %s", target:name(), target:targetfile())

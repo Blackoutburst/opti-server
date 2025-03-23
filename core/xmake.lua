@@ -1,11 +1,11 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("clatest", "c++20")
+set_languages("clatest", "c++23")
 
 target("server")
     set_kind("binary")
-    set_warnings("allextra", "extra", "error") -- "pedantic"
-    add_cxflags("-Wno-unused-parameter", "-Wno-unused-but-set-variable")
+    set_warnings("allextra", "extra") --, "error") -- "pedantic"
+    add_cxflags("-Wno-unused-parameter", "-Wno-unused-but-set-variable", "-Wno-error=stringop-overread") -- stringop-overread for sqlite3 causing a warning
 
     add_includedirs("includes")
     add_files("src/*.c", "src/**/*.c")

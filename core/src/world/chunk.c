@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "world/chunk.h"
-#include "library/library.h"
-#include "utils/perfTimer.h"
-#include "utils/logger.h"
 
 static worldgen_genChunk func_genChunk = NULL;
 

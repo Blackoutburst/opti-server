@@ -1,12 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "utils/types.h"
 #include "utils/logger.h"
 #include "network/server.h"
 #include "database/database.h"
 #include "utils/args.h"
-
 #include "library/library.h"
 
 void loadLibraries(void) {
