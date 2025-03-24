@@ -19,8 +19,6 @@ enum class GenerationStage: uint8_t {
     All
 };
 
-// Server is leaking memory
-
 inline std::unordered_map<glm::ivec4, uint8_t*> _cache;
 inline std::shared_mutex _cache_mutex;
 
@@ -44,18 +42,20 @@ inline void _generateStage(uint8_t* blocks, const glm::ivec3& chunkWorldPos, gen
     // NOTE: only cache stage Terrain, caves or surface (because they are the only being reused during generation)
     if (!(stage == GenerationStage::Terrain || stage == GenerationStage::Caves || stage == GenerationStage::Surface)) return;
 
-
     uint8_t* p = (uint8_t*)malloc(CHUNK_BLOCK_COUNT * sizeof(uint8_t));
     memcpy(p, blocks, CHUNK_BLOCK_COUNT);
 
-    const std::lock_guard<std::shared_mutex> lock(_cache_mutex);
-    _cache[key] = p;
+    _cache_mutex.lock();
+    auto [_, inserted] = _cache.try_emplace(key, p); // Would leak if only try to insert without checking if key already exist
+    _cache_mutex.unlock();
+    if (!inserted) {
+        free(p);
+    }
 }
 
 template <GenerationStage stage>
 void generateStages(uint8_t* blocks, const glm::ivec3& chunkWorldPos) {
-    constexpr size_t MAX_CACHE_SIZE = 20'000;
-
+    constexpr size_t MAX_CACHE_SIZE = 10'000; // 10'000 ~= 40Mo
     if (_cache.size() > MAX_CACHE_SIZE) {
         _cache_mutex.lock();
         for (const auto& it : _cache) {

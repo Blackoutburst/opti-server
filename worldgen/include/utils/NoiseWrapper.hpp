@@ -63,54 +63,56 @@ public:
 
     NoiseData<SIZE, SCALE> genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
         auto data = std::make_shared<float[]>(SIZE*SIZE);
+        _noise->GenUniformGrid2D(data.get(), pos.x / SCALE, pos.z / SCALE, SIZE, SIZE, frequency * SCALE, _seed);
 
-        {
-            const std::shared_lock<std::shared_mutex> lock(_cache2D_mutex);
-            const auto it = _cache2D.find(pos);
-            if (it != _cache2D.end()) {
-                std::memcpy(data.get(), it->second, SIZE*SIZE * sizeof(float));
-                return NoiseData<SIZE, SCALE>(data);
-            }
-        }
+        // {
+        //     const std::shared_lock<std::shared_mutex> lock(_cache2D_mutex);
+        //     const auto it = _cache2D.find(pos);
+        //     if (it != _cache2D.end()) {
+        //         std::memcpy(data.get(), it->second, SIZE*SIZE * sizeof(float));
+        //         return NoiseData<SIZE, SCALE>(data);
+        //     }
+        // }
 
-        float* v = (float*)malloc(SIZE*SIZE * sizeof(float));
-        _noise->GenUniformGrid2D(v, pos.x / SCALE, pos.z / SCALE, SIZE, SIZE, frequency * SCALE, _seed);
-        std::memcpy(data.get(), v, SIZE*SIZE * sizeof(float));
+        // float* v = (float*)malloc(SIZE*SIZE * sizeof(float));
+        // _noise->GenUniformGrid2D(v, pos.x / SCALE, pos.z / SCALE, SIZE, SIZE, frequency * SCALE, _seed);
+        // std::memcpy(data.get(), v, SIZE*SIZE * sizeof(float));
 
-        {
-            const std::lock_guard<std::shared_mutex> lock(_cache2D_mutex);
-            if (_cache2D.size() > MAX_CACHE_SIZE) {
-                cleanCache(_cache2D);
-            }
-            _cache2D[pos] = v;
-        }
+        // {
+        //     const std::lock_guard<std::shared_mutex> lock(_cache2D_mutex);
+        //     if (_cache2D.size() > MAX_CACHE_SIZE) {
+        //         cleanCache(_cache2D);
+        //     }
+        //     _cache2D[pos] = v; // Leak if key already exist
+        // }
 
         return NoiseData<SIZE, SCALE>(data);
     }
 
     NoiseData<SIZE, SCALE> genGrid3D(const glm::ivec3& pos, float frequency = 1.0f) {
         auto data = std::make_shared<float[]>(SIZE*SIZE*SIZE);
+        _noise->GenUniformGrid3D(data.get(), pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
 
-        {
-            const std::shared_lock<std::shared_mutex> lock(_cache3D_mutex);
-            const auto it = _cache3D.find(pos);
-            if (it != _cache3D.end()) {
-                std::memcpy(data.get(), it->second, SIZE*SIZE*SIZE * sizeof(float));
-                return NoiseData<SIZE, SCALE>(data);
-            }
-        }
+        // {
+        //     const std::shared_lock<std::shared_mutex> lock(_cache3D_mutex);
+        //     const auto it = _cache3D.find(pos);
+        //     if (it != _cache3D.end()) {
+        //         std::memcpy(data.get(), it->second, SIZE*SIZE*SIZE * sizeof(float));
+        //         return NoiseData<SIZE, SCALE>(data);
+        //     }
+        // }
 
-        float* v = (float*)malloc(SIZE*SIZE*SIZE * sizeof(float));
-        _noise->GenUniformGrid3D(v, pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
-        std::memcpy(data.get(), v, SIZE*SIZE*SIZE * sizeof(float));
+        // float* v = (float*)malloc(SIZE*SIZE*SIZE * sizeof(float));
+        // _noise->GenUniformGrid3D(v, pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
+        // std::memcpy(data.get(), v, SIZE*SIZE*SIZE * sizeof(float));
 
-        {
-            const std::lock_guard<std::shared_mutex> lock(_cache3D_mutex);
-            if (_cache3D.size() > MAX_CACHE_SIZE) {
-                cleanCache(_cache3D);
-            }
-            _cache3D[pos] = v;
-        }
+        // {
+        //     const std::lock_guard<std::shared_mutex> lock(_cache3D_mutex);
+        //     if (_cache3D.size() > MAX_CACHE_SIZE) {
+        //         cleanCache(_cache3D);
+        //     }
+        //     _cache3D[pos] = v; // Leak if key already exist
+        // }
 
         return NoiseData<SIZE, SCALE>(data);
     }
