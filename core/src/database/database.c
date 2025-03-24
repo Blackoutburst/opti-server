@@ -54,6 +54,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
     for (I32 y = minY; y < maxY; y += CHUNK_SIZE) {
     for (I32 z = minZ; z < maxZ; z += CHUNK_SIZE) {
         if (worldGetChunk(client, x, y, z) != 0) continue;
+        if (get(&client->dbChunks, ((VECTORI){x, y, z})) != NULL) continue; // To avoid loading multiple times the same chunk and leaking memory
 
         sqlite3_reset(stmt);
         sqlite3_clear_bindings(stmt); // can be commented
@@ -81,6 +82,7 @@ void dbGetChunksInRegion(TCP_CLIENT* client, I32 minX, I32 maxX, I32 minY, I32 m
                     logE("uncompressed size is %d instead of %d", uncompressedSize, CHUNK_BLOCK_COUNT);
                 }
 
+                // MEMORY LEAK: if inserting key already existing
                 insert(&client->dbChunks, ((VECTORI){x, y, z}), blocks);
             }
         }
