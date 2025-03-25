@@ -14,8 +14,6 @@ template<int SIZE, int SCALE>
 class NoiseData {
 public:
     NoiseData(std::shared_ptr<float[]> data): _data(data) {}
-    // NoiseData(float* data): _data(std::make_unique<float*>(data)) {}
-    // NoiseData(std::unique_ptr<float*> &&data): _data(data) {}
 
     float get(int x, int y) const {
         return getGridAtScaled2<SIZE, SCALE>(_data.get(), x, y);
@@ -25,9 +23,11 @@ public:
         return getGridAtScaled3<SIZE, SCALE>(_data.get(), x, y, z);
     }
 
+    float operator[] (int index) {
+        return _data[index];
+    }
+
 private:
-    // float* _data = nullptr;
-    // std::unique_ptr<float*> _data;
     std::shared_ptr<float[]> _data;
 };
 

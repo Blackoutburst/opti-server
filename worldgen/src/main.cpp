@@ -100,6 +100,25 @@ void init()
 
     noise_tree_density.assign(treeScale);
     // -- //
+
+
+    // Nether //
+    auto nether = FastNoise::New<FastNoise::Simplex>();
+
+    auto nether_fract = FastNoise::New<FastNoise::FractalFBm>();
+    nether_fract->SetSource(nether);
+    nether_fract->SetOctaveCount(5);
+    nether_fract->SetGain(0.5f);
+    nether_fract->SetLacunarity(2.0f);
+    nether_fract->SetWeightedStrength(0.5f);
+
+    auto netherScale = FastNoise::New<FastNoise::DomainAxisScale>();
+    netherScale->SetSource(nether_fract);
+    netherScale->SetScale<FastNoise::Dim::X>(0.005f);
+    netherScale->SetScale<FastNoise::Dim::Y>(0.005f);
+    netherScale->SetScale<FastNoise::Dim::Z>(0.005f);
+
+    noise_nether_density.assign(netherScale);
 }
 
 void genChunk(uint8_t* blocks, int32_t x, int32_t y, int32_t z) {

@@ -66,7 +66,7 @@ void generateStages(uint8_t* blocks, const glm::ivec3& chunkWorldPos) {
     }
 
     if (stage >= GenerationStage::Terrain)
-        _generateStage<GenerationStage::Terrain>(blocks, chunkWorldPos, generateStage1);
+        _generateStage<GenerationStage::Terrain>(blocks, chunkWorldPos, generateTerrain);
     if (stage >= GenerationStage::Surface)
         _generateStage<GenerationStage::Surface>(blocks, chunkWorldPos, generateSurface);
     if (stage >= GenerationStage::Caves)

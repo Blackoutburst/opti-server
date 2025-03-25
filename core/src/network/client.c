@@ -54,6 +54,8 @@ void clientReceiveUpdateBlock(TCP_CLIENT* client, U8* buffer) {
     free(packet);
     free(buffer);
 
+    if (y < -512) return;
+
     CHUNK* chunk = NULL;
     I32 cx = TO_CHUNK_POS(x);
     I32 cy = TO_CHUNK_POS(y);
@@ -146,6 +148,8 @@ void clientReceiveBlockBulkEdit(TCP_CLIENT* client, U8* buffer) {
         I32 x = blocks[i].x;
         I32 y = blocks[i].y;
         I32 z = blocks[i].z;
+
+        if (y < -512) continue;
 
         CHUNK* chunk = NULL;
         I32 cx = TO_CHUNK_POS(x);

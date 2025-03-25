@@ -3,6 +3,6 @@
 #include <cstdint>
 #include <glm/ext/vector_int3.hpp>
 
-void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);
+void generateTerrain(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);
 void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);
 void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition);

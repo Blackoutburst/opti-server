@@ -31,7 +31,7 @@ enum class BlockType : uint8_t {
 };
 
 float mapRange(float value, float min1, float max1, float min2, float max2);
-void setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ);
+bool setBlock(uint8_t* blocks, uint8_t value, int localX, int localY, int localZ);
 
 // Global variables //
 inline Noise<4> noise_terrain_density;
@@ -40,4 +40,6 @@ inline Noise<2> noise_cave_density;
 inline Noise<8> noise_cave_density1; // big caves
 
 inline Noise<4> noise_tree_density;
+
+inline Noise<4> noise_nether_density;
 // -- //

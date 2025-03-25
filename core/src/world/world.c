@@ -93,7 +93,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     static int a = 0;
     if (a == 0) {
         a = 1;
-        thread_pool = tpool_create(16);
+        thread_pool = tpool_create(7);
         init(&chunks_generated);
         pthread_mutex_init(&chunks_generated_mutex, NULL);
     }
@@ -176,7 +176,7 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
     for (I32 z = pz - rd; z < pz + rd; z += CHUNK_SIZE) {
         U8** data = get(&client->dbChunks, ((VECTORI){x, y, z}));
-        if (y > 256 || y < -256 || worldGetChunk(client, x, y, z)) {
+        if (y > 256 || y < -512 || worldGetChunk(client, x, y, z)) {
             if (data != NULL) free(*data);
             continue;
         }

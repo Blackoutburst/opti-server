@@ -8,7 +8,11 @@
 #include "terrain/terrain.hpp"
 #include "utils/easings.hpp"
 
-void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+NoiseData<CHUNK_SIZE, 1> getTerrainTotalDensity(const glm::ivec3& chunkWorldPosition)
+{
+    auto data = std::make_shared<float[]>(CHUNK_BLOCK_COUNT);
+    float* p = data.get();
+
     NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
     NoiseData v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
 
@@ -18,12 +22,56 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         float heightW = height * 200.0f + 16;
 
         for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
-            int i = INDEX_XYZ(dx, dy, dz);
-            float worldY = chunkWorldPosition.y + dy;
-            glm::ivec3 blockWorldPosition = chunkWorldPosition + glm::ivec3(dx, dy, dz);
-
             float terrainDensity = v_terrain_density.get(dx, dy, dz);
             float density = heightW + terrainDensity * 70.0f;// mapRange(terrainDensity, 0, 64, 0.0f, 0.5f);
+            int i = INDEX_XYZ(dx, dy, dz);
+
+            p[i] = density;
+        }
+    }}
+
+    return NoiseData<CHUNK_SIZE, 1>(data);
+}
+
+static void generateNether(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
+{
+    NoiseData n_terrain_density = noise_nether_density.genGrid3D(chunkWorldPosition);
+
+    for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
+    for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
+    for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
+        int i = INDEX_XYZ(dx, dy, dz);
+
+        float world_y = chunkWorldPosition.y + dy;
+
+        float x = mapRange(world_y, -512, -256, -1.0f, 1.0f);
+
+        float d = n_terrain_density.get(dx, dy, dz) * 0.5f + 0.5f;
+        float density = d * (1.0f - x*x); // bell curve
+
+        if (density < 0.4f) {
+            blocks[i] = (uint8_t)BlockType::Netherrack;
+        } else {
+            if (world_y < -450) {
+                blocks[i] = (uint8_t)BlockType::Lava;
+            } else {
+                blocks[i] = (uint8_t)BlockType::Air;
+            }
+        }
+
+    }}}
+}
+
+static void generateOverworld(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
+{
+    NoiseData terrain_density = getTerrainTotalDensity(chunkWorldPosition);
+
+    for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
+    for (int dx = 0 ; dx < CHUNK_SIZE ; ++dx) {
+        for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
+            int i = INDEX_XYZ(dx, dy, dz);
+            float worldY = chunkWorldPosition.y + dy;
+            float density = terrain_density[i];
 
             if (density > worldY) {
                 blocks[i] = (uint8_t)BlockType::Stone;
@@ -39,7 +87,36 @@ void generateStage1(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
     }}
 }
 
+void generateTerrain(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    if (chunkWorldPosition.y < -256) {
+        generateNether(blocks, chunkWorldPosition);
+    } else {
+        generateOverworld(blocks, chunkWorldPosition);
+    }
+}
+
+// glm::ivec3 getSurfaceGradient(uint8_t* blocks, int x, int y, int z)
+// {
+//     // NoiseData;
+//     // NoiseData v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
+//     // float terrainDensity = v_terrain_density.get(dx, dy, dz);
+//     glm::ivec3 gradient;
+
+//     int i000 = INDEX_XYZ(x, y, z);
+//     int i100 = INDEX_XYZ(x+1, y, z);
+//     int i010 = INDEX_XYZ(x, y+1, z);
+//     int i001 = INDEX_XYZ(x, y, z+1);
+
+//     // gradient.x = blocks[i000] > BlockType::Air - blocks[i100] > BlockType::Air;
+//     // gradient.y = blocks[i000] > BlockType::Air - blocks[i010] > BlockType::Air;
+//     // gradient.z = blocks[i000] > BlockType::Air - blocks[i001] > BlockType::Air;
+
+//     return gradient;
+// }
+
 void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
+    if (chunkWorldPosition.y < -256) return;
+
     uint8_t top_chunk[CHUNK_BLOCK_COUNT];
     generateStages<GenerationStage::Terrain>(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0));
 
@@ -60,8 +137,15 @@ void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         int i0 = INDEX_XYZ(dx, dy, dz);
         int i1 = INDEX_XYZ(dx, dy+1, dz);
 
+        // glm::ivec3 g = getSurfaceGradient(blocks, dx, dy, dz);
+        // if (g.y < 0.5f) continue;
+
         if (blocks[i0] == (uint8_t)BlockType::Stone && blocks[i1] == (uint8_t)BlockType::Air) {
             blocks[i0] = (uint8_t)BlockType::Grass;
+
+            for (int i = 0 ; i < 3 ; ++i) {
+                if (setBlock(blocks, (uint8_t)BlockType::Dirt, dx, dy-1-i, dz) == 0) break;
+            }
         }
     }}}
 }
@@ -84,10 +168,7 @@ float smin( float a, float b, float k )
 }
 
 void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    constexpr int SCALE = 2;
-    constexpr int SIZE = (CHUNK_SIZE / SCALE) + 1;
-    constexpr int SIZE2 = SIZE*SIZE;
-    constexpr int SIZE3 = SIZE*SIZE*SIZE;
+    if (chunkWorldPosition.y < -256) return;
 
     NoiseData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
     NoiseData v_caveDensity = noise_cave_density.genGrid3D(chunkWorldPosition, 0.0085f);
