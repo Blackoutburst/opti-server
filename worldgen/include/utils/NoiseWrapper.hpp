@@ -11,9 +11,9 @@
 #include "chunk.hpp"
 
 template<int SIZE, int SCALE>
-class NoiseData {
+class GridData {
 public:
-    NoiseData(std::shared_ptr<float[]> data): _data(data) {}
+    GridData(std::shared_ptr<float[]> data): _data(data) {}
 
     float get(int x, int y) const {
         return getGridAtScaled2<SIZE, SCALE>(_data.get(), x, y);
@@ -23,7 +23,7 @@ public:
         return getGridAtScaled3<SIZE, SCALE>(_data.get(), x, y, z);
     }
 
-    float operator[] (int index) {
+    float operator[] (int index) const {
         return _data[index];
     }
 
@@ -61,7 +61,7 @@ public:
         return _noise->GenSingle3D(x, y, z, _seed);
     }
 
-    NoiseData<SIZE, SCALE> genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
+    GridData<SIZE, SCALE> genGrid2D(const glm::ivec3& pos, float frequency = 1.0f) {
         auto data = std::make_shared<float[]>(SIZE*SIZE);
         _noise->GenUniformGrid2D(data.get(), pos.x / SCALE, pos.z / SCALE, SIZE, SIZE, frequency * SCALE, _seed);
 
@@ -86,10 +86,10 @@ public:
         //     _cache2D[pos] = v; // Leak if key already exist
         // }
 
-        return NoiseData<SIZE, SCALE>(data);
+        return GridData<SIZE, SCALE>(data);
     }
 
-    NoiseData<SIZE, SCALE> genGrid3D(const glm::ivec3& pos, float frequency = 1.0f) {
+    GridData<SIZE, SCALE> genGrid3D(const glm::ivec3& pos, float frequency = 1.0f) {
         auto data = std::make_shared<float[]>(SIZE*SIZE*SIZE);
         _noise->GenUniformGrid3D(data.get(), pos.x/SCALE, pos.y/SCALE, pos.z/SCALE, SIZE, SIZE, SIZE, frequency * SCALE, _seed);
 
@@ -114,7 +114,7 @@ public:
         //     _cache3D[pos] = v; // Leak if key already exist
         // }
 
-        return NoiseData<SIZE, SCALE>(data);
+        return GridData<SIZE, SCALE>(data);
     }
 
 private:
