@@ -7,42 +7,6 @@
 #include "structures/vegetation.hpp"
 #include "utils/threadsafe_random.hpp"
 
-const uint32_t TREE_X_SIZE = 5;
-const uint32_t TREE_Y_SIZE = 5;
-const uint32_t TREE_Z_SIZE = 5;
-
-const uint8_t tree[] = {
-    0, 0, 0, 0, 0,
-    0, 5, 5, 5, 0,
-    0, 5, 5, 5, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-
-    0, 5, 5, 5, 0,
-    5, 5, 5, 5, 5,
-    5, 5, 5, 5, 5,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-
-    0, 5, 5, 5, 0,
-    5, 5, 4, 5, 5,
-    5, 5, 4, 5, 5,
-    0, 0, 4, 0, 0,
-    0, 0, 4, 0, 0,
-
-    0, 5, 5, 5, 0,
-    5, 5, 5, 5, 5,
-    5, 5, 5, 5, 5,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-
-    0, 0, 0, 0, 0,
-    0, 5, 5, 5, 0,
-    0, 5, 5, 5, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0
-};
-
 static int findGrassBlockFromTop(const uint8_t* blocks, int x, int z) {
     // TODO: get top chunk to look if top block is grass exposed to air
 

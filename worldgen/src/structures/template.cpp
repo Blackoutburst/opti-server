@@ -1,3 +1,39 @@
+// const uint32_t TREE_X_SIZE = 5;
+// const uint32_t TREE_Y_SIZE = 5;
+// const uint32_t TREE_Z_SIZE = 5;
+
+// const uint8_t tree[] = {
+//     0, 0, 0, 0, 0,
+//     0, 5, 5, 5, 0,
+//     0, 5, 5, 5, 0,
+//     0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0,
+
+//     0, 5, 5, 5, 0,
+//     5, 5, 5, 5, 5,
+//     5, 5, 5, 5, 5,
+//     0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0,
+
+//     0, 5, 5, 5, 0,
+//     5, 5, 4, 5, 5,
+//     5, 5, 4, 5, 5,
+//     0, 0, 4, 0, 0,
+//     0, 0, 4, 0, 0,
+
+//     0, 5, 5, 5, 0,
+//     5, 5, 5, 5, 5,
+//     5, 5, 5, 5, 5,
+//     0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0,
+
+//     0, 0, 0, 0, 0,
+//     0, 5, 5, 5, 0,
+//     0, 5, 5, 5, 0,
+//     0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0
+// };
+
 // static void placeTemplate(uint8_t* blocks, uint8_t* template_blocks, glm::ivec3 localPos, int sizeX, int sizeY, int sizeZ) {
 //     for (int32_t dz = 0 ; dz < sizeZ ; ++dz) {
 //     for (int32_t dy = 0 ; dy < sizeY ; ++dy) {
