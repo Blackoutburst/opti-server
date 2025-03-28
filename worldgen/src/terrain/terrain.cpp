@@ -7,8 +7,9 @@
 #include "generationStage.hpp"
 #include "terrain/terrain.hpp"
 #include "utils/easings.hpp"
+#include "utils/threadsafe_random.hpp"
 
-GridData<CHUNK_SIZE, 1> getTerrainTotalDensity(const glm::ivec3& chunkWorldPosition)
+static GridData<CHUNK_SIZE, 1> getTerrainTotalDensity(const glm::ivec3& chunkWorldPosition)
 {
     auto data = std::make_shared<float[]>(CHUNK_BLOCK_COUNT);
     float* p = data.get();
@@ -30,12 +31,20 @@ GridData<CHUNK_SIZE, 1> getTerrainTotalDensity(const glm::ivec3& chunkWorldPosit
         }
     }}
 
+    // density = height * 200.0f + 16 + terrainDensity * 70.0f
+    // density = height * 200.0f + terrainDensity * 70.0f
+    // density += 16
+    // if (density > worldY) {}
+
     return GridData<CHUNK_SIZE, 1>(data);
 }
 
 static void generateNether(uint8_t* blocks, const glm::ivec3& chunkWorldPosition)
 {
     GridData n_terrain_density = noise_nether_density.genGrid3D(chunkWorldPosition);
+
+    threadSafeRandomGenerator::seed(chunkWorldPosition.x ^ chunkWorldPosition.y ^ chunkWorldPosition.z);
+
 
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
     for (int dy = 0 ; dy < CHUNK_SIZE ; ++dy) {
@@ -50,7 +59,15 @@ static void generateNether(uint8_t* blocks, const glm::ivec3& chunkWorldPosition
         float density = d * (1.0f - x*x); // bell curve
 
         if (density < 0.4f) {
-            blocks[i] = (uint8_t)BlockType::Netherrack;
+            constexpr int TRANSITION_HEIGHT = 5;
+            if (world_y > -256 - TRANSITION_HEIGHT) { // transition
+                float t = mapRange(world_y, -256 - TRANSITION_HEIGHT, -256, 0.0f, 1.0f);
+                float rd = threadSafeRandomGenerator::randLinear(0.0f, 1.0f);
+                blocks[i] = rd > t ? (uint8_t)BlockType::Netherrack : (uint8_t)BlockType::Stone;
+            } else {
+                blocks[i] = (uint8_t)BlockType::Netherrack;
+            }
+
         } else {
             if (world_y < -450) {
                 blocks[i] = (uint8_t)BlockType::Lava;
@@ -88,28 +105,29 @@ static void generateOverworld(uint8_t* blocks, const glm::ivec3& chunkWorldPosit
 }
 
 void generateTerrain(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    if (chunkWorldPosition.y < -256) {
-        generateNether(blocks, chunkWorldPosition);
-    } else {
+    if (chunkWorldPosition.y > -256) {
         generateOverworld(blocks, chunkWorldPosition);
+    } else {
+        generateNether(blocks, chunkWorldPosition);
     }
 }
 
-// glm::ivec3 getSurfaceGradient(uint8_t* blocks, int x, int y, int z)
+// glm::vec3 getSurfaceGradient(const float* density, int x, int y, int z)
 // {
-//     // NoiseData;
-//     // NoiseData v_terrain_density = noise_terrain_density.genGrid3D(chunkWorldPosition);
-//     // float terrainDensity = v_terrain_density.get(dx, dy, dz);
-//     glm::ivec3 gradient;
+//     glm::vec3 gradient;
+
+//     if (x == CHUNK_SIZE-1 || y == CHUNK_SIZE-1 || z == CHUNK_SIZE-1) return {0, 1, 0};
 
 //     int i000 = INDEX_XYZ(x, y, z);
 //     int i100 = INDEX_XYZ(x+1, y, z);
 //     int i010 = INDEX_XYZ(x, y+1, z);
 //     int i001 = INDEX_XYZ(x, y, z+1);
 
-//     // gradient.x = blocks[i000] > BlockType::Air - blocks[i100] > BlockType::Air;
-//     // gradient.y = blocks[i000] > BlockType::Air - blocks[i010] > BlockType::Air;
-//     // gradient.z = blocks[i000] > BlockType::Air - blocks[i001] > BlockType::Air;
+//     gradient.x = density[i000] - density[i100];
+//     gradient.y = density[i000] - density[i010];
+//     gradient.z = density[i000] - density[i001];
+
+//     gradient = glm::normalize(gradient);
 
 //     return gradient;
 // }
@@ -119,6 +137,9 @@ void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
     uint8_t top_chunk[CHUNK_BLOCK_COUNT];
     generateStages<GenerationStage::Terrain>(top_chunk, chunkWorldPosition + glm::ivec3(0, CHUNK_SIZE, 0));
+
+    // GridData density = getTerrainTotalDensity(chunkWorldPosition);
+    // Cannot use density because it isn't normalized
 
     // top layer
     for (int dz = 0 ; dz < CHUNK_SIZE ; ++dz) {
@@ -137,8 +158,8 @@ void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         int i0 = INDEX_XYZ(dx, dy, dz);
         int i1 = INDEX_XYZ(dx, dy+1, dz);
 
-        // glm::ivec3 g = getSurfaceGradient(blocks, dx, dy, dz);
-        // if (g.y < 0.5f) continue;
+        // glm::vec3 g = getSurfaceGradient(density.data(), dx, dy, dz);
+        // if (!(g.y > 0.4f)) continue;
 
         if (blocks[i0] == (uint8_t)BlockType::Stone && blocks[i1] == (uint8_t)BlockType::Air) {
             blocks[i0] = (uint8_t)BlockType::Grass;
@@ -151,14 +172,7 @@ void generateSurface(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 }
 
 
-// exponential
-// float smin( float a, float b, float k )
-// {
-//     k *= 1.0;
-//     float r = glm::exp2(-a/k) + glm::exp2(-b/k); // Profiling says that exp2 is slow
-//     return -k*glm::log2(r);
-// }
-
+// https://iquilezles.org/articles/smin/
 // quadratic polynomial (faster)
 float smin( float a, float b, float k )
 {
@@ -168,7 +182,7 @@ float smin( float a, float b, float k )
 }
 
 void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
-    if (chunkWorldPosition.y < -256) return;
+    if (chunkWorldPosition.y < -256-16) return;
 
     GridData v_continental = noise_continental.genGrid2D(chunkWorldPosition);
     GridData v_caveDensity = noise_cave_density.genGrid3D(chunkWorldPosition, 0.0085f);
@@ -184,14 +198,19 @@ void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
 
             if (world_y > height) continue;
 
-            float minFactor = 0.9f;// + mask * 0.1f;
-            float maxFactor = 1.0f;// + mask * 0.1f;
+            float minFactor = 0.9f;
+            float maxFactor = 1.0f;
             float threshold = glm::max(minFactor, mapRange(world_y, -64, height, minFactor, maxFactor));
 
             float density = v_caveDensity.get(x, y, z);
-            float densityC = v_caveBig.get(x, y, z) * 0.5f + 0.5f;
+            float densityBig = v_caveBig.get(x, y, z) * 0.5f + 0.5f;
 
-            density = 1.0f - smin(1.0f - density, 1.0f - (float)(densityC < 0.3f), 0.05f); // smooth max du pauvre
+            density = 1.0f - smin(1.0f - density, 1.0f - (float)(densityBig < 0.3f), 0.05f); // smooth max du pauvre
+
+            if (world_y <= -256) { // Nether transition zone between -256 and -256-16
+                float t = mapRange(world_y, -256-16, -256, 1.0f, 0.0f);
+                threshold = glm::mix(threshold, 1.0f, t);
+            }
 
             if (density > threshold) {
                 if (blocks[index] != (uint8_t)BlockType::Water) {
@@ -201,14 +220,3 @@ void generateCaves(uint8_t* blocks, const glm::ivec3& chunkWorldPosition) {
         }
     }}
 }
-
-
-// static int findTopBlock(uint8_t* blocks, int localX, int localZ) {
-//     if (blocks[INDEX_XYZ(localX, CHUNK_SIZE-1, localZ)] != (uint8_t)BlockType::Air) {
-//         return -1;
-//     }
-//     for (int y = CHUNK_SIZE-1 ; y >= 0 ; --y) {
-//         if (blocks[INDEX_XYZ(localX, y, localZ)] > 0) return y;
-//     }
-//     return -1;
-// }

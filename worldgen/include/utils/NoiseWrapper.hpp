@@ -27,6 +27,10 @@ public:
         return _data[index];
     }
 
+    float* data() const {
+        return _data.get();
+    }
+
 private:
     std::shared_ptr<float[]> _data;
 };
