@@ -59,8 +59,10 @@ static int findGrassBlockFromTop(const uint8_t* blocks, int x, int z) {
 }
 
 static void findTreeSpawnPoints(const uint8_t* blocks, std::vector<glm::ivec3>& spawnPoints, const glm::ivec3& chunkWorldPosition) {
-    float n = noise_tree_density.genSingle2D(chunkWorldPosition.x, chunkWorldPosition.z);
-    int treeCount = n > 0.0f ? n * 2 : 0;
+    float n = noise_tree_density.genSingle2D(chunkWorldPosition.x, chunkWorldPosition.z) * 0.5f + 0.5f;
+    // n *= 4.5f; // increase amount
+    int treeCount = n > 0.5f ? n * 4 : 0;
+    treeCount = glm::min(6, treeCount); // max 6 trees by chunks // TODO: make that work independently of chunk size
 
     threadSafeRandomGenerator::seed(chunkWorldPosition.x ^ chunkWorldPosition.y ^ chunkWorldPosition.z);
 
