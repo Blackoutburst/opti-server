@@ -21,6 +21,7 @@ server.out
 .cache
 compile_commands.json
 
+build-compile-commands.bat
 build.bat
 build.sh
 run.bat
