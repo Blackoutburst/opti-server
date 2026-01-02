@@ -91,7 +91,7 @@ void _serverSendRemoveEntity(TCP_CLIENT* client, U32 entityId) {
         client->position.x = 0;
         client->position.y = 0;
         client->position.z = 0;
-        client->chunkPosition.x = 100000;
+        client->chunkPosition.x = 100000; //Note: Set to 100000 so the worldUpdateClientChunk() will load the entire area around the player without the player having to move
         client->chunkPosition.y = 100000;
         client->chunkPosition.z = 100000;
         client->yaw = 0;

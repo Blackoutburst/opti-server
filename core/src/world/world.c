@@ -1,5 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "world/world.h"
 #include "network/client.h"
 #include "database/database.h"
@@ -7,15 +5,18 @@
 #include "utils/tpool.h"
 #include "world/chunk.h"
 #include "utils/perfTimer.h"
+#include "utils/vector.h"
 #include "utils/cpthread.h"
-// #include "utils/logger.h"
-
+#include <stdlib.h>
+#include <stdio.h>
 
 // -- MULTITHREADING -- //
 // TODO: put this stuff elsewhere to make it work for multiple players
 static tpool_t* thread_pool = NULL;
 static vec(CHUNK*) chunks_generated;
 static pthread_mutex_t chunks_generated_mutex;
+
+// static VECTORI player_chunk_position = {0, 0, 0}; // used for the comparison function
 
 // typedef struct funcArg funcArg_t;
 // struct funcArg {
@@ -87,12 +88,19 @@ void worldRemoveChunkOutOfRenderDistance(TCP_CLIENT* client) {
     free(keysToRemove);
 }
 
-void worldUpdateClientChunk(TCP_CLIENT* client) {
+// static int chunkDistanceComparator(const void* chunk_a, const void* chunk_b)
+// {
+//     float distance_a = vec3i_distance2(player_chunk_position, *((const VECTORI*)chunk_a));
+//     float distance_b = vec3i_distance2(player_chunk_position, *((const VECTORI*)chunk_b));
+//     return distance_a - distance_b;
+// }
+
+void worldUpdateClientChunk(TCP_CLIENT* client, VECTORI previousClientChunkPosition) {
     if (client == NULL) return;
 
-    static int a = 0;
-    if (a == 0) {
-        a = 1;
+    static int is_initialized = 0;
+    if (is_initialized == 0) {
+        is_initialized = 1;
         thread_pool = tpool_create(7);
         init(&chunks_generated);
         pthread_mutex_init(&chunks_generated_mutex, NULL);
@@ -100,17 +108,17 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
     worldRemoveChunkOutOfRenderDistance(client);
 
-    I32 px = TO_CHUNK_POS((I32)client->position.x);
-    I32 py = TO_CHUNK_POS((I32)client->position.y);
-    I32 pz = TO_CHUNK_POS((I32)client->position.z);
+    I32 px = client->chunkPosition.x;
+    I32 py = client->chunkPosition.y;
+    I32 pz = client->chunkPosition.z;
     I32 rd = ((I32)client->renderDistance) * CHUNK_SIZE;
 
-    I32 oldbbminX = client->chunkPosition.x - rd;
-    I32 oldbbmaxX = client->chunkPosition.x + rd;
-    I32 oldbbminY = client->chunkPosition.y - rd;
-    I32 oldbbmaxY = client->chunkPosition.y + rd;
-    I32 oldbbminZ = client->chunkPosition.z - rd;
-    I32 oldbbmaxZ = client->chunkPosition.z + rd;
+    I32 oldbbminX = previousClientChunkPosition.x - rd;
+    I32 oldbbmaxX = previousClientChunkPosition.x + rd;
+    I32 oldbbminY = previousClientChunkPosition.y - rd;
+    I32 oldbbmaxY = previousClientChunkPosition.y + rd;
+    I32 oldbbminZ = previousClientChunkPosition.z - rd;
+    I32 oldbbmaxZ = previousClientChunkPosition.z + rd;
 
     I32 newbbminX = px - rd;
     I32 newbbmaxX = px + rd;
@@ -119,16 +127,15 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
     I32 newbbminZ = pz - rd;
     I32 newbbmaxZ = pz + rd;
 
-    I32 dx = (px - client->chunkPosition.x);
-    I32 dy = (py - client->chunkPosition.y);
-    I32 dz = (pz - client->chunkPosition.z);
+    I32 dx = (px - previousClientChunkPosition.x);
+    I32 dy = (py - previousClientChunkPosition.y);
+    I32 dz = (pz - previousClientChunkPosition.z);
 
     // logD("chunkPosition %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("%d %d %d", bx, by, bz);
     // logD("p: %d %d %d", px, py, pz);
     // logD("chunkPosition: %d %d %d", client->chunkPosition.x, client->chunkPosition.y, client->chunkPosition.z);
     // logD("a_d: %d %d %d", a_dx, a_dy, a_dz);
-
     // logD("newbbminmaxX %d %d", newbbminX, newbbmaxX);
     // logD("newbbminmaxY %d %d", newbbminY, newbbmaxY);
     // logD("newbbminmaxZ %d %d", newbbminZ, newbbmaxZ);
@@ -171,6 +178,24 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
 
     perfTimerBegin("worldUpdateClientChunk");
 
+    /* Sort chunks by distance */
+    // const int coords_size = client->renderDistance*2 * client->renderDistance*2 * client->renderDistance*2;
+    // VECTORI coords[coords_size];
+    // int index = 0;
+    // for (I32 x = -rd; x < rd; x += CHUNK_SIZE) {
+    // for (I32 y = -rd; y < rd; y += CHUNK_SIZE) {
+    // for (I32 z = -rd; z < rd; z += CHUNK_SIZE) {
+    //     coords[index++] = (VECTORI){x, y, z};
+    // }}}
+    // player_chunk_position = client->chunkPosition;
+    // qsort(coords, coords_size, sizeof(VECTORI), chunkDistanceComparator); // sort chunks by distance
+    // for (int i = 0 ; i < coords_size ; ++i) {
+    //     VECTORI coord = coords[i];
+    //     int x = px + coord.x;
+    //     int y = py + coord.y;
+    //     int z = pz + coord.z;
+    /* ---------------------- */
+
     // Do not use <= or it will not match the above code
     for (I32 x = px - rd; x < px + rd; x += CHUNK_SIZE) {
     for (I32 y = py - rd; y < py + rd; y += CHUNK_SIZE) {
@@ -210,7 +235,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
         }
     }}}
 
-
     tpool_wait(thread_pool); // TODO: just lock the list instead of waiting
     for_each(&chunks_generated, c) {
         chunksToAdd[addIndex++] = *c;
@@ -224,7 +248,6 @@ void worldUpdateClientChunk(TCP_CLIENT* client) {
                 clientSendChunk(client, *c);
             }
         }
-
     }
     clear(&chunks_generated);
 
