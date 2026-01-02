@@ -16,3 +16,6 @@ struct vectori {
     I32 y;
     I32 z;
 };
+
+float vec3i_distance2(VECTORI a, VECTORI b);
+float vec3i_distance(VECTORI a, VECTORI b);
